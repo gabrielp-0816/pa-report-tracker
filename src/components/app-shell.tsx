@@ -1,9 +1,6 @@
-import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { LayoutDashboard, ClipboardList, Users, BellRing, LogOut } from "lucide-react";
+import { Link, useLocation } from "@tanstack/react-router";
+import { LayoutDashboard, ClipboardList, Users, BellRing } from "lucide-react";
 import type { ReactNode } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import type { User } from "@supabase/supabase-js";
-import { toast } from "sonner";
 
 const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -12,15 +9,8 @@ const nav = [
   { to: "/reminders", label: "Reminders", icon: BellRing },
 ] as const;
 
-export function AppShell({ user, children }: { user: User; children: ReactNode }) {
+export function AppShell({ children }: { children: ReactNode }) {
   const location = useLocation();
-  const navigate = useNavigate();
-
-  const signOut = async () => {
-    await supabase.auth.signOut();
-    toast.success("Signed out");
-    navigate({ to: "/auth", replace: true });
-  };
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -53,11 +43,8 @@ export function AppShell({ user, children }: { user: User; children: ReactNode }
           })}
         </nav>
         <div className="border-t border-sidebar-border p-4">
-          <p className="truncate text-xs text-sidebar-foreground/60">Signed in as</p>
-          <p className="truncate text-sm font-medium">{user.email}</p>
-          <button onClick={signOut} className="mt-3 flex w-full items-center gap-2 rounded-md bg-sidebar-accent/50 px-3 py-2 text-sm hover:bg-sidebar-accent">
-            <LogOut className="h-4 w-4" /> Sign out
-          </button>
+          <p className="text-xs text-sidebar-foreground/60">Faculty Post-Activity</p>
+          <p className="text-sm font-medium">Report Tracking System</p>
         </div>
       </aside>
 
@@ -67,7 +54,6 @@ export function AppShell({ user, children }: { user: User; children: ReactNode }
             <div className="grid h-8 w-8 place-items-center rounded-md bg-primary text-primary-foreground font-display font-bold">F</div>
             <span className="font-display font-semibold">FPARTS</span>
           </Link>
-          <button onClick={signOut} className="text-sm text-muted-foreground">Sign out</button>
         </header>
         <nav className="flex gap-1 overflow-x-auto border-b border-border bg-card px-2 py-2 md:hidden">
           {nav.map((item) => {
