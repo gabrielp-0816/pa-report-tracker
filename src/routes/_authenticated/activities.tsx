@@ -46,7 +46,7 @@ function ActivitiesPage() {
       const { data, error } = await supabase
         .from("activities")
         .select("id,entry_no,date_received,dts_ref,faculty_name,position,task_rendered,date_activity,institution,par_received_at")
-        .order("date_received", { ascending: false })
+        .order("entry_no", { ascending: true, nullsFirst: false })
         .limit(5000);
       if (error) throw error;
       return data as Activity[];
