@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /activities
+Disallow: /faculty
+Disallow: /reminders
