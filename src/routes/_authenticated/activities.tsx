@@ -38,7 +38,7 @@ function ActivitiesPage() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<"all" | "pending" | "submitted">("all");
-  const [sorting, setSorting] = useState<SortingState>([{ id: "date_received", desc: true }]);
+  const [sorting, setSorting] = useState<SortingState>([{ id: "entry_no", desc: false }]);
 
   const { data, isLoading } = useQuery({
     queryKey: ["activities-list"],
