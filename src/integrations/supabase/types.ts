@@ -14,16 +14,179 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      activities: {
+        Row: {
+          beneficiaries: string | null
+          coc_issued_at: string | null
+          contribution: string | null
+          created_at: string
+          date_activity: string | null
+          date_received: string | null
+          date_release_so: string | null
+          dts_ref: string | null
+          entry_no: number | null
+          faculty_name: string
+          id: string
+          institution: string | null
+          notes: string | null
+          par_received_at: string | null
+          position: string | null
+          task_rendered: string | null
+          time_received: string | null
+          time_release_so: string | null
+          updated_at: string
+          with_coc: string | null
+        }
+        Insert: {
+          beneficiaries?: string | null
+          coc_issued_at?: string | null
+          contribution?: string | null
+          created_at?: string
+          date_activity?: string | null
+          date_received?: string | null
+          date_release_so?: string | null
+          dts_ref?: string | null
+          entry_no?: number | null
+          faculty_name: string
+          id?: string
+          institution?: string | null
+          notes?: string | null
+          par_received_at?: string | null
+          position?: string | null
+          task_rendered?: string | null
+          time_received?: string | null
+          time_release_so?: string | null
+          updated_at?: string
+          with_coc?: string | null
+        }
+        Update: {
+          beneficiaries?: string | null
+          coc_issued_at?: string | null
+          contribution?: string | null
+          created_at?: string
+          date_activity?: string | null
+          date_received?: string | null
+          date_release_so?: string | null
+          dts_ref?: string | null
+          entry_no?: number | null
+          faculty_name?: string
+          id?: string
+          institution?: string | null
+          notes?: string | null
+          par_received_at?: string | null
+          position?: string | null
+          task_rendered?: string | null
+          time_received?: string | null
+          time_release_so?: string | null
+          updated_at?: string
+          with_coc?: string | null
+        }
+        Relationships: []
+      }
+      faculty_contacts: {
+        Row: {
+          department: string | null
+          email: string | null
+          faculty_name: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          department?: string | null
+          email?: string | null
+          faculty_name: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          department?: string | null
+          email?: string | null
+          faculty_name?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reminder_logs: {
+        Row: {
+          activity_id: string | null
+          channel: string
+          email: string | null
+          faculty_name: string
+          id: string
+          message: string | null
+          sent_at: string
+          sent_by: string | null
+          status: string
+        }
+        Insert: {
+          activity_id?: string | null
+          channel?: string
+          email?: string | null
+          faculty_name: string
+          id?: string
+          message?: string | null
+          sent_at?: string
+          sent_by?: string | null
+          status?: string
+        }
+        Update: {
+          activity_id?: string | null
+          channel?: string
+          email?: string | null
+          faculty_name?: string
+          id?: string
+          message?: string | null
+          sent_at?: string
+          sent_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reminder_logs_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "staff"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +313,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "staff"],
+    },
   },
 } as const
