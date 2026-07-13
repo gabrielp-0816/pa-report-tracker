@@ -251,10 +251,10 @@ function ActivitiesPage() {
             </thead>
             <tbody>
               {isLoading && (
-                <tr><td colSpan={11} className="px-3 py-8 text-center text-sm text-muted-foreground">Loading activities…</td></tr>
+                <tr><td colSpan={13} className="px-3 py-8 text-center text-sm text-muted-foreground">Loading activities…</td></tr>
               )}
               {!isLoading && table.getRowModel().rows.length === 0 && (
-                <tr><td colSpan={11} className="px-3 py-8 text-center text-sm text-muted-foreground">No activities match your filters.</td></tr>
+                <tr><td colSpan={13} className="px-3 py-8 text-center text-sm text-muted-foreground">No activities match your filters.</td></tr>
               )}
               {table.getRowModel().rows.map((row) => (
                 <tr key={row.id} className="border-b border-border last:border-0 hover:bg-muted/40">
