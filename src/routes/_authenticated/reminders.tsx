@@ -203,6 +203,59 @@ function RemindersPage() {
               </div>
             );
           })}
+
+          {grouped.length > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3 text-xs">
+              <span className="text-muted-foreground">
+                Page {pageIndex + 1} of {pageCount} ({grouped.length} faculty)
+              </span>
+
+              <div className="flex items-center gap-2">
+                <label htmlFor="reminder-skip-page" className="text-muted-foreground">Skip to page</label>
+                <input
+                  id="reminder-skip-page"
+                  type="number"
+                  min={1}
+                  max={pageCount}
+                  value={pageInput}
+                  onChange={(e) => setPageInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      const n = parseInt(pageInput, 10);
+                      if (!Number.isNaN(n)) setPageIndex(Math.max(0, Math.min(n - 1, pageCount - 1)));
+                    }
+                  }}
+                  className="w-16 rounded-md border border-input bg-background px-2 py-1 text-center text-sm outline-none focus:ring-2 focus:ring-ring"
+                />
+                <button
+                  onClick={() => {
+                    const n = parseInt(pageInput, 10);
+                    if (!Number.isNaN(n)) setPageIndex(Math.max(0, Math.min(n - 1, pageCount - 1)));
+                  }}
+                  className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90"
+                >
+                  Go
+                </button>
+              </div>
+
+              <div className="flex gap-1">
+                <button
+                  onClick={() => setPageIndex((i) => Math.max(0, i - 1))}
+                  disabled={pageIndex === 0}
+                  className="rounded-md border border-input p-1.5 disabled:opacity-40"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  onClick={() => setPageIndex((i) => Math.min(pageCount - 1, i + 1))}
+                  disabled={pageIndex >= pageCount - 1}
+                  className="rounded-md border border-input p-1.5 disabled:opacity-40"
+                >
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         <aside className="space-y-3">
