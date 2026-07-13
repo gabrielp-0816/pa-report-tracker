@@ -187,6 +187,19 @@ function ActivitiesPage() {
     initialState: { pagination: { pageSize: 20 } },
   });
 
+  const [pageInput, setPageInput] = useState("1");
+  const pageCount = table.getPageCount() || 1;
+  useEffect(() => {
+    setPageInput(String(table.getState().pagination.pageIndex + 1));
+  }, [table.getState().pagination.pageIndex]);
+
+  const goToPage = () => {
+    const n = parseInt(pageInput, 10);
+    if (!Number.isNaN(n)) {
+      table.setPageIndex(Math.max(0, Math.min(n - 1, pageCount - 1)));
+    }
+  };
+
   return (
     <div className="mx-auto max-w-[100rem] space-y-4 px-6 py-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
