@@ -33,8 +33,10 @@ type Activity = {
   institution: string | null;
   par_received_at: string | null;
   contribution: string | null;
-
+  beneficiaries: string | null;
+  coc_issued_at: string | null;
 };
+
 
 function ActivitiesPage() {
   const qc = useQueryClient();
@@ -47,7 +49,7 @@ function ActivitiesPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("activities")
-        .select("id,entry_no,date_received,dts_ref,faculty_name,position,task_rendered,date_activity,institution,par_received_at,contribution")
+        .select("id,entry_no,date_received,dts_ref,faculty_name,position,task_rendered,date_activity,institution,par_received_at,contribution,beneficiaries,coc_issued_at")
         .order("entry_no", { ascending: true, nullsFirst: false })
         .limit(5000);
       if (error) throw error;
@@ -115,6 +117,26 @@ function ActivitiesPage() {
       c.accessor("institution", { header: "Institution", cell: (i) => <span className="text-xs">{i.getValue() ?? "—"}</span> }),
       c.accessor("date_activity", { header: "Activity Date", cell: (i) => <span className="text-xs">{i.getValue() ?? "—"}</span> }),
       c.accessor("date_received", { header: "Received", cell: (i) => <span className="text-xs">{fmtDate(i.getValue())}</span> }),
+      c.accessor("beneficiaries", {
+        header: "Beneficiaries",
+        cell: (i) => {
+          const v = i.getValue();
+          if (!v) return <span className="text-xs text-muted-foreground">—</span>;
+          return <span className="block max-w-[16rem] truncate text-xs" title={v}>{v}</span>;
+        },
+      }),
+      c.accessor("coc_issued_at", {
+        header: "COC Issued",
+        cell: (i) => {
+          const v = i.getValue();
+          return v ? (
+            <span className="text-xs" title={fmtDateTime(v)}>{fmtDate(v)}</span>
+          ) : (
+            <span className="text-xs text-muted-foreground">—</span>
+          );
+        },
+      }),
+
       c.accessor("par_received_at", {
         header: "PAR Status",
         cell: (i) => {
@@ -229,10 +251,10 @@ function ActivitiesPage() {
             </thead>
             <tbody>
               {isLoading && (
-                <tr><td colSpan={11} className="px-3 py-8 text-center text-sm text-muted-foreground">Loading activities…</td></tr>
+                <tr><td colSpan={13} className="px-3 py-8 text-center text-sm text-muted-foreground">Loading activities…</td></tr>
               )}
               {!isLoading && table.getRowModel().rows.length === 0 && (
-                <tr><td colSpan={11} className="px-3 py-8 text-center text-sm text-muted-foreground">No activities match your filters.</td></tr>
+                <tr><td colSpan={13} className="px-3 py-8 text-center text-sm text-muted-foreground">No activities match your filters.</td></tr>
               )}
               {table.getRowModel().rows.map((row) => (
                 <tr key={row.id} className="border-b border-border last:border-0 hover:bg-muted/40">
