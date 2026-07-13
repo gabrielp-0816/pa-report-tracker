@@ -126,7 +126,7 @@ function RemindersPage() {
               No pending PARs. Everything is up to date. 🎉
             </div>
           )}
-          {grouped.map(([name, items]) => {
+          {paginated.map(([name, items]) => {
             const email = contacts?.get(name) ?? null;
             const oldest = items[0];
             const daysOld = daysBetween(oldest.date_received);
