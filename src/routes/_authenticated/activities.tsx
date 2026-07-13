@@ -33,8 +33,10 @@ type Activity = {
   institution: string | null;
   par_received_at: string | null;
   contribution: string | null;
-
+  beneficiaries: string | null;
+  coc_issued_at: string | null;
 };
+
 
 function ActivitiesPage() {
   const qc = useQueryClient();
