@@ -117,6 +117,26 @@ function ActivitiesPage() {
       c.accessor("institution", { header: "Institution", cell: (i) => <span className="text-xs">{i.getValue() ?? "—"}</span> }),
       c.accessor("date_activity", { header: "Activity Date", cell: (i) => <span className="text-xs">{i.getValue() ?? "—"}</span> }),
       c.accessor("date_received", { header: "Received", cell: (i) => <span className="text-xs">{fmtDate(i.getValue())}</span> }),
+      c.accessor("beneficiaries", {
+        header: "Beneficiaries",
+        cell: (i) => {
+          const v = i.getValue();
+          if (!v) return <span className="text-xs text-muted-foreground">—</span>;
+          return <span className="block max-w-[16rem] truncate text-xs" title={v}>{v}</span>;
+        },
+      }),
+      c.accessor("coc_issued_at", {
+        header: "COC Issued",
+        cell: (i) => {
+          const v = i.getValue();
+          return v ? (
+            <span className="text-xs" title={fmtDateTime(v)}>{fmtDate(v)}</span>
+          ) : (
+            <span className="text-xs text-muted-foreground">—</span>
+          );
+        },
+      }),
+
       c.accessor("par_received_at", {
         header: "PAR Status",
         cell: (i) => {
