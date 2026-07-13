@@ -32,6 +32,8 @@ type Activity = {
   date_activity: string | null;
   institution: string | null;
   par_received_at: string | null;
+  contribution: string | null;
+
 };
 
 function ActivitiesPage() {
@@ -45,7 +47,7 @@ function ActivitiesPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("activities")
-        .select("id,entry_no,date_received,dts_ref,faculty_name,position,task_rendered,date_activity,institution,par_received_at")
+        .select("id,entry_no,date_received,dts_ref,faculty_name,position,task_rendered,date_activity,institution,par_received_at,contribution")
         .order("entry_no", { ascending: true, nullsFirst: false })
         .limit(5000);
       if (error) throw error;
@@ -81,7 +83,8 @@ function ActivitiesPage() {
         (r.institution ?? "").toLowerCase().includes(q) ||
         (r.dts_ref ?? "").toLowerCase().includes(q) ||
         (r.position ?? "").toLowerCase().includes(q) ||
-        (r.task_rendered ?? "").toLowerCase().includes(q)
+        (r.task_rendered ?? "").toLowerCase().includes(q) ||
+        (r.contribution ?? "").toLowerCase().includes(q)
       );
     });
   }, [rows, search, status]);
@@ -90,7 +93,23 @@ function ActivitiesPage() {
     const c = createColumnHelper<Activity>();
     return [
       c.accessor("entry_no", { header: "No.", cell: (i) => <span className="text-xs text-muted-foreground">{i.getValue() ?? "—"}</span> }),
+      c.accessor("dts_ref", { header: "DTS No.", cell: (i) => <span className="text-xs font-mono">{i.getValue() ?? "—"}</span> }),
       c.accessor("faculty_name", { header: "Faculty", cell: (i) => <div className="font-medium">{i.getValue()}</div> }),
+      c.accessor("contribution", {
+        header: "Contribution to Core Functions",
+        cell: (i) => {
+          const v = i.getValue();
+          if (!v) return <span className="text-xs text-muted-foreground">—</span>;
+          return (
+            <span
+              className="block max-w-[22rem] truncate text-xs text-muted-foreground"
+              title={v}
+            >
+              {v}
+            </span>
+          );
+        },
+      }),
       c.accessor("position", { header: "Position", cell: (i) => <span className="text-xs text-muted-foreground">{i.getValue() ?? "—"}</span> }),
       c.accessor("task_rendered", { header: "Task", cell: (i) => <span className="text-xs">{i.getValue() ?? "—"}</span> }),
       c.accessor("institution", { header: "Institution", cell: (i) => <span className="text-xs">{i.getValue() ?? "—"}</span> }),
