@@ -43,6 +43,12 @@ function ActivitiesPage() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<"all" | "pending" | "submitted">("all");
   const [sorting, setSorting] = useState<SortingState>([{ id: "entry_no", desc: false }]);
+  const [pageInput, setPageInput] = useState("1");
+
+  const pageCount = table?.getPageCount() || 1;
+  useEffect(() => {
+    setPageInput(String((table?.getState().pagination.pageIndex ?? 0) + 1));
+  }, [table?.getState().pagination.pageIndex]);
 
   const { data, isLoading } = useQuery({
     queryKey: ["activities-list"],
