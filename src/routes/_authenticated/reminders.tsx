@@ -89,6 +89,24 @@ function RemindersPage() {
     return Array.from(map.entries()).sort((a, b) => b[1].length - a[1].length);
   }, [pending]);
 
+  const PAGE_SIZE = 10;
+  const pageCount = Math.max(1, Math.ceil(grouped.length / PAGE_SIZE));
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageInput, setPageInput] = useState("1");
+
+  useEffect(() => {
+    setPageIndex(0);
+  }, [grouped.length]);
+
+  useEffect(() => {
+    setPageInput(String(pageIndex + 1));
+  }, [pageIndex]);
+
+  const paginated = useMemo(() => {
+    const start = pageIndex * PAGE_SIZE;
+    return grouped.slice(start, start + PAGE_SIZE);
+  }, [grouped, pageIndex]);
+
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-6 py-8">
       <div className="flex flex-wrap items-start justify-between gap-3">
