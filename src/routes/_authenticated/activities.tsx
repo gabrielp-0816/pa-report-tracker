@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   createColumnHelper,
   flexRender,
@@ -187,6 +187,19 @@ function ActivitiesPage() {
     initialState: { pagination: { pageSize: 20 } },
   });
 
+  const [pageInput, setPageInput] = useState("1");
+  const pageCount = table.getPageCount() || 1;
+  useEffect(() => {
+    setPageInput(String(table.getState().pagination.pageIndex + 1));
+  }, [table.getState().pagination.pageIndex]);
+
+  const goToPage = () => {
+    const n = parseInt(pageInput, 10);
+    if (!Number.isNaN(n)) {
+      table.setPageIndex(Math.max(0, Math.min(n - 1, pageCount - 1)));
+    }
+  };
+
   return (
     <div className="mx-auto max-w-[100rem] space-y-4 px-6 py-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -266,10 +279,31 @@ function ActivitiesPage() {
             </tbody>
           </table>
         </div>
-        <div className="flex items-center justify-between border-t border-border bg-muted/30 px-4 py-2 text-xs">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border bg-muted/30 px-4 py-2 text-xs">
           <span className="text-muted-foreground">
             Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount() || 1}
           </span>
+
+          <div className="flex items-center gap-2">
+            <label htmlFor="skip-page" className="text-muted-foreground">Skip to page</label>
+            <input
+              id="skip-page"
+              type="number"
+              min={1}
+              max={pageCount}
+              value={pageInput}
+              onChange={(e) => setPageInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") goToPage(); }}
+              className="w-16 rounded-md border border-input bg-background px-2 py-1 text-center text-sm outline-none focus:ring-2 focus:ring-ring"
+            />
+            <button
+              onClick={goToPage}
+              className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90"
+            >
+              Go
+            </button>
+          </div>
+
           <div className="flex gap-1">
             <button onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()} className="rounded-md border border-input p-1.5 disabled:opacity-40">
               <ChevronLeft className="h-3.5 w-3.5" />
