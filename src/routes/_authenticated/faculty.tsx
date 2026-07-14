@@ -73,6 +73,24 @@ function FacultyPage() {
     );
   }, [contacts, search]);
 
+  const PAGE_SIZE = 15;
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageInput, setPageInput] = useState("1");
+
+  useEffect(() => { setPageIndex(0); }, [search, filtered.length]);
+  useEffect(() => { setPageInput(String(pageIndex + 1)); }, [pageIndex]);
+
+  const paginated = useMemo(
+    () => filtered.slice(pageIndex * PAGE_SIZE, pageIndex * PAGE_SIZE + PAGE_SIZE),
+    [filtered, pageIndex],
+  );
+
+  const goToPage = () => {
+    const n = parseInt(pageInput, 10);
+    if (!Number.isNaN(n)) setPageIndex(Math.max(0, Math.min(n - 1, pageCount - 1)));
+  };
+
   return (
     <div className="mx-auto max-w-7xl space-y-4 px-6 py-8">
       <div>
