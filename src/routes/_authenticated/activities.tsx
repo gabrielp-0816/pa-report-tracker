@@ -278,12 +278,23 @@ function ActivitiesPage() {
                 <tr><td colSpan={13} className="px-3 py-8 text-center text-sm text-muted-foreground">No activities match your filters.</td></tr>
               )}
               {table.getRowModel().rows.map((row) => (
-                <tr key={row.id} className="border-b border-border last:border-0 hover:bg-muted/40">
+                <tr
+                  key={row.id}
+                  onClick={() => setSelectedId(row.original.id)}
+                  className="cursor-pointer border-b border-border last:border-0 hover:bg-muted/40"
+                >
                   {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="px-3 py-2.5 align-top">{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                    <td
+                      key={cell.id}
+                      className="px-3 py-2.5 align-top"
+                      onClick={(e) => { if (cell.column.id === "actions") e.stopPropagation(); }}
+                    >
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
                   ))}
                 </tr>
               ))}
+
             </tbody>
           </table>
         </div>
