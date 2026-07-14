@@ -25,6 +25,9 @@ type Activity = {
   id: string;
   entry_no: number | null;
   date_received: string | null;
+  time_received: string | null;
+  date_release_so: string | null;
+  time_release_so: string | null;
   dts_ref: string | null;
   faculty_name: string;
   position: string | null;
@@ -35,7 +38,10 @@ type Activity = {
   contribution: string | null;
   beneficiaries: string | null;
   coc_issued_at: string | null;
+  with_coc: string | null;
+  notes: string | null;
 };
+
 
 
 function ActivitiesPage() {
