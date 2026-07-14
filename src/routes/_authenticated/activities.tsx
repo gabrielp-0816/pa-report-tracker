@@ -55,7 +55,7 @@ function ActivitiesPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("activities")
-        .select("id,entry_no,date_received,dts_ref,faculty_name,position,task_rendered,date_activity,institution,par_received_at,contribution,beneficiaries,coc_issued_at")
+        .select("id,entry_no,date_received,time_received,date_release_so,time_release_so,dts_ref,faculty_name,position,task_rendered,date_activity,institution,par_received_at,contribution,beneficiaries,coc_issued_at,with_coc,notes")
         .order("entry_no", { ascending: true, nullsFirst: false })
         .limit(5000);
       if (error) throw error;
