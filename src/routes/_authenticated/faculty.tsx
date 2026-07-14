@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useMemo, useState } from "react";
-import { Search, Pencil, Save, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Search, Pencil, Save, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/faculty")({
@@ -73,6 +73,24 @@ function FacultyPage() {
     );
   }, [contacts, search]);
 
+  const PAGE_SIZE = 15;
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageInput, setPageInput] = useState("1");
+
+  useEffect(() => { setPageIndex(0); }, [search, filtered.length]);
+  useEffect(() => { setPageInput(String(pageIndex + 1)); }, [pageIndex]);
+
+  const paginated = useMemo(
+    () => filtered.slice(pageIndex * PAGE_SIZE, pageIndex * PAGE_SIZE + PAGE_SIZE),
+    [filtered, pageIndex],
+  );
+
+  const goToPage = () => {
+    const n = parseInt(pageInput, 10);
+    if (!Number.isNaN(n)) setPageIndex(Math.max(0, Math.min(n - 1, pageCount - 1)));
+  };
+
   return (
     <div className="mx-auto max-w-7xl space-y-4 px-6 py-8">
       <div>
@@ -107,7 +125,7 @@ function FacultyPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((c) => {
+              {paginated.map((c) => {
                 const r = rollup?.get(c.faculty_name);
                 const isEditing = editing === c.faculty_name;
                 return (
@@ -157,6 +175,48 @@ function FacultyPage() {
             </tbody>
           </table>
         </div>
+        {filtered.length > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border bg-muted/30 px-4 py-2 text-xs">
+            <span className="text-muted-foreground">
+              Page {pageIndex + 1} of {pageCount} ({filtered.length} faculty)
+            </span>
+            <div className="flex items-center gap-2">
+              <label htmlFor="faculty-skip-page" className="text-muted-foreground">Skip to page</label>
+              <input
+                id="faculty-skip-page"
+                type="number"
+                min={1}
+                max={pageCount}
+                value={pageInput}
+                onChange={(e) => setPageInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") goToPage(); }}
+                className="w-16 rounded-md border border-input bg-background px-2 py-1 text-center text-sm outline-none focus:ring-2 focus:ring-ring"
+              />
+              <button
+                onClick={goToPage}
+                className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90"
+              >
+                Go
+              </button>
+            </div>
+            <div className="flex gap-1">
+              <button
+                onClick={() => setPageIndex((i) => Math.max(0, i - 1))}
+                disabled={pageIndex === 0}
+                className="rounded-md border border-input p-1.5 disabled:opacity-40"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+              </button>
+              <button
+                onClick={() => setPageIndex((i) => Math.min(pageCount - 1, i + 1))}
+                disabled={pageIndex >= pageCount - 1}
+                className="rounded-md border border-input p-1.5 disabled:opacity-40"
+              >
+                <ChevronRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
