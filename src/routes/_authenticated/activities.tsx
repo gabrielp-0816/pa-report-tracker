@@ -365,6 +365,8 @@ function ActivityDetailModal({
   onClose: () => void;
   onToggleSubmitted: (a: Activity) => void;
 }) {
+  const [confirming, setConfirming] = useState(false);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", onKey);
@@ -430,20 +432,45 @@ function ActivityDetailModal({
         </div>
 
         <div className="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-6 py-3">
-          <button
-            onClick={onClose}
-            className="rounded-md border border-input px-3 py-1.5 text-sm font-medium hover:bg-muted"
-          >
-            Close
-          </button>
-          <button
-            onClick={() => onToggleSubmitted(activity)}
-            className={`rounded-md px-3 py-1.5 text-sm font-medium ${
-              submitted ? "border border-input hover:bg-muted" : "bg-primary text-primary-foreground hover:opacity-90"
-            }`}
-          >
-            {submitted ? "Undo submission" : "Mark submitted"}
-          </button>
+          {confirming ? (
+            <>
+              <span className="mr-2 text-sm text-muted-foreground">
+                Mark this activity as submitted?
+              </span>
+              <button
+                onClick={() => setConfirming(false)}
+                className="rounded-md border border-input px-3 py-1.5 text-sm font-medium hover:bg-muted"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setConfirming(false);
+                  onToggleSubmitted(activity);
+                }}
+                className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90"
+              >
+                Confirm
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={onClose}
+                className="rounded-md border border-input px-3 py-1.5 text-sm font-medium hover:bg-muted"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => submitted ? onToggleSubmitted(activity) : setConfirming(true)}
+                className={`rounded-md px-3 py-1.5 text-sm font-medium ${
+                  submitted ? "border border-input hover:bg-muted" : "bg-primary text-primary-foreground hover:opacity-90"
+                }`}
+              >
+                {submitted ? "Undo submission" : "Mark submitted"}
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
