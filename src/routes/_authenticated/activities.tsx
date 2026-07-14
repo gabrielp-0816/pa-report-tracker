@@ -333,6 +333,120 @@ function ActivitiesPage() {
           </div>
         </div>
       </div>
+
+      {selectedId && (
+        <ActivityDetailModal
+          activity={rows.find((r) => r.id === selectedId) ?? null}
+          onClose={() => setSelectedId(null)}
+          onToggleSubmitted={(a) =>
+            markMutation.mutate({ id: a.id, submitted: !a.par_received_at })
+          }
+        />
+      )}
     </div>
   );
 }
+
+function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="grid grid-cols-[10rem_1fr] gap-3 border-b border-border/60 py-2 last:border-0">
+      <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="text-sm">{value ?? <span className="text-muted-foreground">—</span>}</div>
+    </div>
+  );
+}
+
+function ActivityDetailModal({
+  activity,
+  onClose,
+  onToggleSubmitted,
+}: {
+  activity: Activity | null;
+  onClose: () => void;
+  onToggleSubmitted: (a: Activity) => void;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  if (!activity) return null;
+  const submitted = !!activity.par_received_at;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-2xl border border-border bg-card shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-3 border-b border-border bg-muted/40 px-6 py-4">
+          <div>
+            <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Activity #{activity.entry_no ?? "—"} · {activity.dts_ref ?? "No DTS"}
+            </div>
+            <h2 className="mt-1 font-display text-xl font-semibold">{activity.faculty_name}</h2>
+            <div className="mt-1">
+              {submitted ? (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-success/15 px-2 py-0.5 text-xs font-medium text-success">
+                  <CheckCircle2 className="h-3 w-3" /> PAR Submitted
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-warning/25 px-2 py-0.5 text-xs font-medium text-warning-foreground">
+                  <XCircle className="h-3 w-3" /> PAR Pending
+                </span>
+              )}
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="max-h-[65vh] overflow-y-auto px-6 py-4">
+          <DetailRow label="Faculty" value={activity.faculty_name} />
+          <DetailRow label="Position" value={activity.position} />
+          <DetailRow label="DTS Ref" value={activity.dts_ref} />
+          <DetailRow label="Task Rendered" value={activity.task_rendered} />
+          <DetailRow label="Institution" value={activity.institution} />
+          <DetailRow label="Activity Date" value={activity.date_activity} />
+          <DetailRow label="Date Received" value={fmtDate(activity.date_received)} />
+          <DetailRow label="Time Received" value={activity.time_received} />
+          <DetailRow label="SO Release Date" value={fmtDate(activity.date_release_so)} />
+          <DetailRow label="SO Release Time" value={activity.time_release_so} />
+          <DetailRow label="Contribution" value={<span className="whitespace-pre-wrap">{activity.contribution}</span>} />
+          <DetailRow label="Beneficiaries" value={<span className="whitespace-pre-wrap">{activity.beneficiaries}</span>} />
+          <DetailRow label="With COC" value={activity.with_coc} />
+          <DetailRow label="COC Issued" value={activity.coc_issued_at ? fmtDateTime(activity.coc_issued_at) : null} />
+          <DetailRow label="PAR Received" value={activity.par_received_at ? fmtDateTime(activity.par_received_at) : null} />
+          <DetailRow label="Notes" value={<span className="whitespace-pre-wrap">{activity.notes}</span>} />
+        </div>
+
+        <div className="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-6 py-3">
+          <button
+            onClick={onClose}
+            className="rounded-md border border-input px-3 py-1.5 text-sm font-medium hover:bg-muted"
+          >
+            Close
+          </button>
+          <button
+            onClick={() => onToggleSubmitted(activity)}
+            className={`rounded-md px-3 py-1.5 text-sm font-medium ${
+              submitted ? "border border-input hover:bg-muted" : "bg-primary text-primary-foreground hover:opacity-90"
+            }`}
+          >
+            {submitted ? "Undo submission" : "Mark submitted"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
