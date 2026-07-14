@@ -347,7 +347,7 @@ function ActivitiesPage() {
   );
 }
 
-function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
+function DetailRow({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="grid grid-cols-[10rem_1fr] gap-3 border-b border-border/60 py-2 last:border-0">
       <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</div>
