@@ -14,7 +14,7 @@ import {
 } from "@tanstack/react-table";
 import { fmtDate, fmtDateTime } from "@/lib/format";
 import { toast } from "sonner";
-import { CheckCircle2, XCircle, Search, ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { CheckCircle2, XCircle, Search, ArrowUpDown, ChevronLeft, ChevronRight, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/activities")({
   head: () => ({ meta: [{ title: "Activities — FPARTS" }] }),
