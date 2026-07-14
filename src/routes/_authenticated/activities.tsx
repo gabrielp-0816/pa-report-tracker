@@ -49,6 +49,8 @@ function ActivitiesPage() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<"all" | "pending" | "submitted">("all");
   const [sorting, setSorting] = useState<SortingState>([{ id: "entry_no", desc: false }]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
 
   const { data, isLoading } = useQuery({
     queryKey: ["activities-list"],
