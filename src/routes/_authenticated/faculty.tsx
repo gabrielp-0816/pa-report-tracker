@@ -125,7 +125,7 @@ function FacultyPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((c) => {
+              {paginated.map((c) => {
                 const r = rollup?.get(c.faculty_name);
                 const isEditing = editing === c.faculty_name;
                 return (
