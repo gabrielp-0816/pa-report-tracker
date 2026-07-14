@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   createColumnHelper,
   flexRender,
@@ -14,7 +14,7 @@ import {
 } from "@tanstack/react-table";
 import { fmtDate, fmtDateTime } from "@/lib/format";
 import { toast } from "sonner";
-import { CheckCircle2, XCircle, Search, ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { CheckCircle2, XCircle, Search, ArrowUpDown, ChevronLeft, ChevronRight, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/activities")({
   head: () => ({ meta: [{ title: "Activities — FPARTS" }] }),
@@ -25,6 +25,9 @@ type Activity = {
   id: string;
   entry_no: number | null;
   date_received: string | null;
+  time_received: string | null;
+  date_release_so: string | null;
+  time_release_so: string | null;
   dts_ref: string | null;
   faculty_name: string;
   position: string | null;
@@ -35,7 +38,10 @@ type Activity = {
   contribution: string | null;
   beneficiaries: string | null;
   coc_issued_at: string | null;
+  with_coc: string | null;
+  notes: string | null;
 };
+
 
 
 function ActivitiesPage() {
@@ -43,13 +49,15 @@ function ActivitiesPage() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<"all" | "pending" | "submitted">("all");
   const [sorting, setSorting] = useState<SortingState>([{ id: "entry_no", desc: false }]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
 
   const { data, isLoading } = useQuery({
     queryKey: ["activities-list"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("activities")
-        .select("id,entry_no,date_received,dts_ref,faculty_name,position,task_rendered,date_activity,institution,par_received_at,contribution,beneficiaries,coc_issued_at")
+        .select("id,entry_no,date_received,time_received,date_release_so,time_release_so,dts_ref,faculty_name,position,task_rendered,date_activity,institution,par_received_at,contribution,beneficiaries,coc_issued_at,with_coc,notes")
         .order("entry_no", { ascending: true, nullsFirst: false })
         .limit(5000);
       if (error) throw error;
@@ -270,12 +278,23 @@ function ActivitiesPage() {
                 <tr><td colSpan={13} className="px-3 py-8 text-center text-sm text-muted-foreground">No activities match your filters.</td></tr>
               )}
               {table.getRowModel().rows.map((row) => (
-                <tr key={row.id} className="border-b border-border last:border-0 hover:bg-muted/40">
+                <tr
+                  key={row.id}
+                  onClick={() => setSelectedId(row.original.id)}
+                  className="cursor-pointer border-b border-border last:border-0 hover:bg-muted/40"
+                >
                   {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="px-3 py-2.5 align-top">{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                    <td
+                      key={cell.id}
+                      className="px-3 py-2.5 align-top"
+                      onClick={(e) => { if (cell.column.id === "actions") e.stopPropagation(); }}
+                    >
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
                   ))}
                 </tr>
               ))}
+
             </tbody>
           </table>
         </div>
@@ -314,6 +333,120 @@ function ActivitiesPage() {
           </div>
         </div>
       </div>
+
+      {selectedId && (
+        <ActivityDetailModal
+          activity={rows.find((r) => r.id === selectedId) ?? null}
+          onClose={() => setSelectedId(null)}
+          onToggleSubmitted={(a) =>
+            markMutation.mutate({ id: a.id, submitted: !a.par_received_at })
+          }
+        />
+      )}
     </div>
   );
 }
+
+function DetailRow({ label, value }: { label: string; value: ReactNode }) {
+  return (
+    <div className="grid grid-cols-[10rem_1fr] gap-3 border-b border-border/60 py-2 last:border-0">
+      <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="text-sm">{value ?? <span className="text-muted-foreground">—</span>}</div>
+    </div>
+  );
+}
+
+function ActivityDetailModal({
+  activity,
+  onClose,
+  onToggleSubmitted,
+}: {
+  activity: Activity | null;
+  onClose: () => void;
+  onToggleSubmitted: (a: Activity) => void;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  if (!activity) return null;
+  const submitted = !!activity.par_received_at;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-2xl border border-border bg-card shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-3 border-b border-border bg-muted/40 px-6 py-4">
+          <div>
+            <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Activity #{activity.entry_no ?? "—"} · {activity.dts_ref ?? "No DTS"}
+            </div>
+            <h2 className="mt-1 font-display text-xl font-semibold">{activity.faculty_name}</h2>
+            <div className="mt-1">
+              {submitted ? (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-success/15 px-2 py-0.5 text-xs font-medium text-success">
+                  <CheckCircle2 className="h-3 w-3" /> PAR Submitted
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-warning/25 px-2 py-0.5 text-xs font-medium text-warning-foreground">
+                  <XCircle className="h-3 w-3" /> PAR Pending
+                </span>
+              )}
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="max-h-[65vh] overflow-y-auto px-6 py-4">
+          <DetailRow label="Faculty" value={activity.faculty_name} />
+          <DetailRow label="Position" value={activity.position} />
+          <DetailRow label="DTS Ref" value={activity.dts_ref} />
+          <DetailRow label="Task Rendered" value={activity.task_rendered} />
+          <DetailRow label="Institution" value={activity.institution} />
+          <DetailRow label="Activity Date" value={activity.date_activity} />
+          <DetailRow label="Date Received" value={fmtDate(activity.date_received)} />
+          <DetailRow label="Time Received" value={activity.time_received} />
+          <DetailRow label="SO Release Date" value={fmtDate(activity.date_release_so)} />
+          <DetailRow label="SO Release Time" value={activity.time_release_so} />
+          <DetailRow label="Contribution" value={<span className="whitespace-pre-wrap">{activity.contribution}</span>} />
+          <DetailRow label="Beneficiaries" value={<span className="whitespace-pre-wrap">{activity.beneficiaries}</span>} />
+          <DetailRow label="With COC" value={activity.with_coc} />
+          <DetailRow label="COC Issued" value={activity.coc_issued_at ? fmtDateTime(activity.coc_issued_at) : null} />
+          <DetailRow label="PAR Received" value={activity.par_received_at ? fmtDateTime(activity.par_received_at) : null} />
+          <DetailRow label="Notes" value={<span className="whitespace-pre-wrap">{activity.notes}</span>} />
+        </div>
+
+        <div className="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-6 py-3">
+          <button
+            onClick={onClose}
+            className="rounded-md border border-input px-3 py-1.5 text-sm font-medium hover:bg-muted"
+          >
+            Close
+          </button>
+          <button
+            onClick={() => onToggleSubmitted(activity)}
+            className={`rounded-md px-3 py-1.5 text-sm font-medium ${
+              submitted ? "border border-input hover:bg-muted" : "bg-primary text-primary-foreground hover:opacity-90"
+            }`}
+          >
+            {submitted ? "Undo submission" : "Mark submitted"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
