@@ -14,7 +14,6 @@ import {
 } from "@tanstack/react-table";
 import { fmtDate, fmtDateTime } from "@/lib/format";
 import { toast } from "sonner";
-<<<<<<< HEAD
 import {
   CheckCircle2,
   XCircle,
@@ -23,10 +22,9 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  Plus,
+  Pencil,
 } from "lucide-react";
-=======
-import { CheckCircle2, XCircle, Search, ArrowUpDown, ChevronLeft, ChevronRight, X, Plus, Pencil } from "lucide-react";
->>>>>>> 746c70525a2d1f9799543e35a0c763d763639d08
 
 export const Route = createFileRoute("/_authenticated/activities")({
   head: () => ({ meta: [{ title: "Activities — FPARTS" }] }),
@@ -54,8 +52,6 @@ type Activity = {
   notes: string | null;
 };
 
-<<<<<<< HEAD
-=======
 type ActivityFormValues = Omit<Activity, "id" | "par_received_at" | "coc_issued_at"> & {
   par_received_at: string | null;
   coc_issued_at: string | null;
@@ -81,17 +77,13 @@ const EMPTY_FORM: ActivityFormValues = {
   notes: null,
 };
 
->>>>>>> 746c70525a2d1f9799543e35a0c763d763639d08
 function ActivitiesPage() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<"all" | "pending" | "submitted">("all");
   const [sorting, setSorting] = useState<SortingState>([{ id: "entry_no", desc: false }]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-<<<<<<< HEAD
-=======
   const [creating, setCreating] = useState(false);
->>>>>>> 746c70525a2d1f9799543e35a0c763d763639d08
 
   const { data, isLoading } = useQuery({
     queryKey: ["activities-list"],
@@ -190,13 +182,9 @@ function ActivitiesPage() {
           const v = i.getValue();
           if (!v) return <span className="text-xs text-muted-foreground">—</span>;
           return (
-<<<<<<< HEAD
             <span className="block max-w-[22rem] truncate text-xs text-muted-foreground" title={v}>
               {v}
             </span>
-=======
-            <span className="block max-w-[22rem] truncate text-xs text-muted-foreground" title={v}>{v}</span>
->>>>>>> 746c70525a2d1f9799543e35a0c763d763639d08
           );
         },
       }),
@@ -236,7 +224,6 @@ function ActivitiesPage() {
         header: "COC Issued",
         cell: (i) => {
           const v = i.getValue();
-<<<<<<< HEAD
           return v ? (
             <span className="text-xs" title={fmtDateTime(v)}>
               {fmtDate(v)}
@@ -244,11 +231,9 @@ function ActivitiesPage() {
           ) : (
             <span className="text-xs text-muted-foreground">—</span>
           );
-=======
-          return v ? <span className="text-xs" title={fmtDateTime(v)}>{fmtDate(v)}</span> : <span className="text-xs text-muted-foreground">—</span>;
->>>>>>> 746c70525a2d1f9799543e35a0c763d763639d08
         },
       }),
+
       c.accessor("par_received_at", {
         header: "PAR Status",
         cell: (i) => {
@@ -274,7 +259,9 @@ function ActivitiesPage() {
               disabled={markMutation.isPending}
               onClick={() => markMutation.mutate({ id: row.original.id, submitted: !submitted })}
               className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
-                submitted ? "border border-input hover:bg-muted" : "bg-primary text-primary-foreground hover:opacity-90"
+                submitted
+                  ? "border border-input hover:bg-muted"
+                  : "bg-primary text-primary-foreground hover:opacity-90"
               }`}
             >
               {submitted ? "Undo" : "Mark submitted"}
@@ -439,7 +426,12 @@ function ActivitiesPage() {
               }}
               className="w-16 rounded-md border border-input bg-background px-2 py-1 text-center text-sm outline-none focus:ring-2 focus:ring-ring"
             />
-            <button onClick={goToPage} className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90">Go</button>
+            <button
+              onClick={goToPage}
+              className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90"
+            >
+              Go
+            </button>
           </div>
           <div className="flex gap-1">
             <button
@@ -464,7 +456,9 @@ function ActivitiesPage() {
         <ActivityDetailModal
           activity={selected}
           onClose={() => setSelectedId(null)}
-          onToggleSubmitted={(a) => markMutation.mutate({ id: a.id, submitted: !a.par_received_at })}
+          onToggleSubmitted={(a) =>
+            markMutation.mutate({ id: a.id, submitted: !a.par_received_at })
+          }
           onSave={(values) =>
             updateMutation.mutateAsync({ id: selected.id, values }).then(() => setSelectedId(null))
           }
@@ -529,15 +523,24 @@ function ActivityDetailModal({
         title={`Edit activity #${activity.entry_no ?? ""}`}
         initial={rest as ActivityFormValues}
         onClose={() => setEditing(false)}
-        onSave={async (values) => { await onSave(values); setEditing(false); }}
+        onSave={async (values) => {
+          await onSave(values);
+          setEditing(false);
+        }}
         saving={saving}
       />
     );
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-2xl border border-border bg-card shadow-2xl" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-2xl border border-border bg-card shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-start justify-between gap-3 border-b border-border bg-muted/40 px-6 py-4">
           <div>
             <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -556,7 +559,11 @@ function ActivityDetailModal({
               )}
             </div>
           </div>
-          <button onClick={onClose} aria-label="Close" className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground">
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -598,10 +605,20 @@ function ActivityDetailModal({
         <div className="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-6 py-3">
           {confirming ? (
             <>
-              <span className="mr-2 text-sm text-muted-foreground">Mark this activity as submitted?</span>
-              <button onClick={() => setConfirming(false)} className="rounded-md border border-input px-3 py-1.5 text-sm font-medium hover:bg-muted">Cancel</button>
+              <span className="mr-2 text-sm text-muted-foreground">
+                Mark this activity as submitted?
+              </span>
               <button
-                onClick={() => { setConfirming(false); onToggleSubmitted(activity); }}
+                onClick={() => setConfirming(false)}
+                className="rounded-md border border-input px-3 py-1.5 text-sm font-medium hover:bg-muted"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setConfirming(false);
+                  onToggleSubmitted(activity);
+                }}
                 className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90"
               >
                 Confirm
@@ -609,7 +626,12 @@ function ActivityDetailModal({
             </>
           ) : (
             <>
-              <button onClick={onClose} className="rounded-md border border-input px-3 py-1.5 text-sm font-medium hover:bg-muted">Close</button>
+              <button
+                onClick={onClose}
+                className="rounded-md border border-input px-3 py-1.5 text-sm font-medium hover:bg-muted"
+              >
+                Close
+              </button>
               <button
                 onClick={() => setEditing(true)}
                 className="inline-flex items-center gap-1.5 rounded-md border border-input px-3 py-1.5 text-sm font-medium hover:bg-muted"
@@ -634,19 +656,19 @@ function ActivityDetailModal({
   );
 }
 
-function FormField({
-  label, children,
-}: { label: string; children: ReactNode }) {
-
+function FormField({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="flex flex-col gap-1">
-      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</span>
+      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {label}
+      </span>
       {children}
     </label>
   );
 }
 
-const inputCls = "w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring";
+const inputCls =
+  "w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring";
 
 function toDateInput(v: string | null): string {
   if (!v) return "";
@@ -656,7 +678,11 @@ function toDateInput(v: string | null): string {
 }
 
 function ActivityFormModal({
-  title, initial, onClose, onSave, saving,
+  title,
+  initial,
+  onClose,
+  onSave,
+  saving,
 }: {
   title: string;
   initial: ActivityFormValues;
@@ -667,7 +693,9 @@ function ActivityFormModal({
   const [values, setValues] = useState<ActivityFormValues>(initial);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
@@ -690,11 +718,21 @@ function ActivityFormModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
-      <div className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-2xl border border-border bg-card shadow-2xl" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-2xl border border-border bg-card shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-start justify-between gap-3 border-b border-border bg-muted/40 px-6 py-4">
           <h2 className="font-display text-xl font-semibold">{title}</h2>
-          <button onClick={onClose} aria-label="Close" className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground">
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -706,48 +744,101 @@ function ActivityFormModal({
                 type="number"
                 className={inputCls}
                 value={values.entry_no ?? ""}
-                onChange={(e) => set("entry_no", e.target.value === "" ? null : Number(e.target.value))}
+                onChange={(e) =>
+                  set("entry_no", e.target.value === "" ? null : Number(e.target.value))
+                }
               />
             </FormField>
             <FormField label="DTS Ref">
-              <input className={inputCls} value={values.dts_ref ?? ""} onChange={(e) => set("dts_ref", nullable(e.target.value))} />
+              <input
+                className={inputCls}
+                value={values.dts_ref ?? ""}
+                onChange={(e) => set("dts_ref", nullable(e.target.value))}
+              />
             </FormField>
             <FormField label="Faculty Name *">
-              <input className={inputCls} value={values.faculty_name} onChange={(e) => set("faculty_name", e.target.value)} />
+              <input
+                className={inputCls}
+                value={values.faculty_name}
+                onChange={(e) => set("faculty_name", e.target.value)}
+              />
             </FormField>
             <FormField label="Position">
-              <input className={inputCls} value={values.position ?? ""} onChange={(e) => set("position", nullable(e.target.value))} />
+              <input
+                className={inputCls}
+                value={values.position ?? ""}
+                onChange={(e) => set("position", nullable(e.target.value))}
+              />
             </FormField>
             <FormField label="Task Rendered">
-              <input className={inputCls} value={values.task_rendered ?? ""} onChange={(e) => set("task_rendered", nullable(e.target.value))} />
+              <input
+                className={inputCls}
+                value={values.task_rendered ?? ""}
+                onChange={(e) => set("task_rendered", nullable(e.target.value))}
+              />
             </FormField>
             <FormField label="Institution">
-              <input className={inputCls} value={values.institution ?? ""} onChange={(e) => set("institution", nullable(e.target.value))} />
+              <input
+                className={inputCls}
+                value={values.institution ?? ""}
+                onChange={(e) => set("institution", nullable(e.target.value))}
+              />
             </FormField>
             <FormField label="Activity Date (text)">
-              <input className={inputCls} value={values.date_activity ?? ""} onChange={(e) => set("date_activity", nullable(e.target.value))} />
+              <input
+                className={inputCls}
+                value={values.date_activity ?? ""}
+                onChange={(e) => set("date_activity", nullable(e.target.value))}
+              />
             </FormField>
             <FormField label="Date Received">
-              <input type="date" className={inputCls} value={toDateInput(values.date_received)} onChange={(e) => set("date_received", nullable(e.target.value))} />
+              <input
+                type="date"
+                className={inputCls}
+                value={toDateInput(values.date_received)}
+                onChange={(e) => set("date_received", nullable(e.target.value))}
+              />
             </FormField>
             <FormField label="Time Received">
-              <input className={inputCls} value={values.time_received ?? ""} onChange={(e) => set("time_received", nullable(e.target.value))} />
+              <input
+                className={inputCls}
+                value={values.time_received ?? ""}
+                onChange={(e) => set("time_received", nullable(e.target.value))}
+              />
             </FormField>
             <FormField label="SO Release Date">
-              <input type="date" className={inputCls} value={toDateInput(values.date_release_so)} onChange={(e) => set("date_release_so", nullable(e.target.value))} />
+              <input
+                type="date"
+                className={inputCls}
+                value={toDateInput(values.date_release_so)}
+                onChange={(e) => set("date_release_so", nullable(e.target.value))}
+              />
             </FormField>
             <FormField label="SO Release Time">
-              <input className={inputCls} value={values.time_release_so ?? ""} onChange={(e) => set("time_release_so", nullable(e.target.value))} />
+              <input
+                className={inputCls}
+                value={values.time_release_so ?? ""}
+                onChange={(e) => set("time_release_so", nullable(e.target.value))}
+              />
             </FormField>
             <FormField label="With COC">
-              <input className={inputCls} value={values.with_coc ?? ""} onChange={(e) => set("with_coc", nullable(e.target.value))} />
+              <input
+                className={inputCls}
+                value={values.with_coc ?? ""}
+                onChange={(e) => set("with_coc", nullable(e.target.value))}
+              />
             </FormField>
             <FormField label="COC Issued At">
               <input
                 type="datetime-local"
                 className={inputCls}
                 value={values.coc_issued_at ? values.coc_issued_at.slice(0, 16) : ""}
-                onChange={(e) => set("coc_issued_at", e.target.value ? new Date(e.target.value).toISOString() : null)}
+                onChange={(e) =>
+                  set(
+                    "coc_issued_at",
+                    e.target.value ? new Date(e.target.value).toISOString() : null,
+                  )
+                }
               />
             </FormField>
             <FormField label="PAR Received At">
@@ -755,29 +846,54 @@ function ActivityFormModal({
                 type="datetime-local"
                 className={inputCls}
                 value={values.par_received_at ? values.par_received_at.slice(0, 16) : ""}
-                onChange={(e) => set("par_received_at", e.target.value ? new Date(e.target.value).toISOString() : null)}
+                onChange={(e) =>
+                  set(
+                    "par_received_at",
+                    e.target.value ? new Date(e.target.value).toISOString() : null,
+                  )
+                }
               />
             </FormField>
             <div className="sm:col-span-2">
               <FormField label="Contribution to Core Functions">
-                <textarea rows={3} className={inputCls} value={values.contribution ?? ""} onChange={(e) => set("contribution", nullable(e.target.value))} />
+                <textarea
+                  rows={3}
+                  className={inputCls}
+                  value={values.contribution ?? ""}
+                  onChange={(e) => set("contribution", nullable(e.target.value))}
+                />
               </FormField>
             </div>
             <div className="sm:col-span-2">
               <FormField label="Beneficiaries">
-                <textarea rows={2} className={inputCls} value={values.beneficiaries ?? ""} onChange={(e) => set("beneficiaries", nullable(e.target.value))} />
+                <textarea
+                  rows={2}
+                  className={inputCls}
+                  value={values.beneficiaries ?? ""}
+                  onChange={(e) => set("beneficiaries", nullable(e.target.value))}
+                />
               </FormField>
             </div>
             <div className="sm:col-span-2">
               <FormField label="Notes">
-                <textarea rows={2} className={inputCls} value={values.notes ?? ""} onChange={(e) => set("notes", nullable(e.target.value))} />
+                <textarea
+                  rows={2}
+                  className={inputCls}
+                  value={values.notes ?? ""}
+                  onChange={(e) => set("notes", nullable(e.target.value))}
+                />
               </FormField>
             </div>
           </div>
         </div>
 
         <div className="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-6 py-3">
-          <button onClick={onClose} className="rounded-md border border-input px-3 py-1.5 text-sm font-medium hover:bg-muted">Cancel</button>
+          <button
+            onClick={onClose}
+            className="rounded-md border border-input px-3 py-1.5 text-sm font-medium hover:bg-muted"
+          >
+            Cancel
+          </button>
           <button
             onClick={submit}
             disabled={saving}
@@ -790,4 +906,3 @@ function ActivityFormModal({
     </div>
   );
 }
-
