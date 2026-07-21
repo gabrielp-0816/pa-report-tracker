@@ -3,8 +3,19 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { BellRing, Mail, ExternalLink, Clock, AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  BellRing,
+  Mail,
+  ExternalLink,
+  Clock,
+  AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
+  Send,
+  CheckSquare,
+} from "lucide-react";
 import { fmtDate, fmtDateTime, daysBetween } from "@/lib/format";
+import { BulkEmailModal, PendingFaculty } from "@/components/bulk-email-modal";
 
 export const Route = createFileRoute("/_authenticated/reminders")({
   head: () => ({ meta: [{ title: "Reminders — FPARTS" }] }),
@@ -22,7 +33,13 @@ type Pending = {
 
 type Contact = { faculty_name: string; email: string | null };
 
-type LogEntry = { id: string; faculty_name: string; email: string | null; sent_at: string; message: string | null };
+type LogEntry = {
+  id: string;
+  faculty_name: string;
+  email: string | null;
+  sent_at: string;
+  message: string | null;
+};
 
 function RemindersPage() {
   const qc = useQueryClient();
@@ -64,11 +81,25 @@ function RemindersPage() {
   });
 
   const logReminder = useMutation({
-    mutationFn: async ({ activity_id, faculty_name, email, message }: { activity_id: string; faculty_name: string; email: string | null; message: string }) => {
+    mutationFn: async ({
+      activity_id,
+      faculty_name,
+      email,
+      message,
+    }: {
+      activity_id: string;
+      faculty_name: string;
+      email: string | null;
+      message: string;
+    }) => {
       const { data: user } = await supabase.auth.getUser();
       const { error } = await supabase.from("reminder_logs").insert({
-        activity_id, faculty_name, email, message,
-        channel: "email", status: "sent",
+        activity_id,
+        faculty_name,
+        email,
+        message,
+        channel: "email",
+        status: "sent",
         sent_by: user.user?.id,
       });
       if (error) throw error;
@@ -88,6 +119,25 @@ function RemindersPage() {
     }
     return Array.from(map.entries()).sort((a, b) => b[1].length - a[1].length);
   }, [pending]);
+
+  const [bulkModalOpen, setBulkModalOpen] = useState(false);
+  const [modalPreselected, setModalPreselected] = useState<string[]>([]);
+
+  const facultyListForModal: PendingFaculty[] = useMemo(() => {
+    return grouped.map(([name, items]) => {
+      const email = contacts?.get(name) ?? null;
+      const oldest = items[0];
+      const daysOld = daysBetween(oldest?.date_received);
+      const overdue = (daysOld ?? 0) > 14;
+      return {
+        faculty_name: name,
+        email,
+        count: items.length,
+        overdue,
+        oldestActivityId: oldest?.id,
+      };
+    });
+  }, [grouped, contacts]);
 
   const PAGE_SIZE = 10;
   const pageCount = Math.max(1, Math.ceil(grouped.length / PAGE_SIZE));
@@ -113,9 +163,20 @@ function RemindersPage() {
         <div>
           <h1 className="font-display text-3xl font-semibold">Reminders</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {pending?.length ?? 0} pending PARs across {grouped.length} faculty. Send follow-ups and keep a record of every reminder.
+            {pending?.length ?? 0} pending PARs across {grouped.length} faculty. Send follow-ups and
+            keep a record of every reminder.
           </p>
         </div>
+        <button
+          onClick={() => {
+            setModalPreselected([]);
+            setBulkModalOpen(true);
+          }}
+          disabled={grouped.length === 0}
+          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-primary-foreground shadow-sm transition-all hover:opacity-90 disabled:opacity-50"
+        >
+          <Mail className="h-4 w-4" /> Bulk Email Reminders
+        </button>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1.7fr_1fr]">
@@ -132,11 +193,19 @@ function RemindersPage() {
             const daysOld = daysBetween(oldest.date_received);
             const overdue = (daysOld ?? 0) > 14;
 
-            const subject = encodeURIComponent(`Reminder: Post-Activity Report submission (${items.length} pending)`);
+            const subject = encodeURIComponent(
+              `Reminder: Post-Activity Report submission (${items.length} pending)`,
+            );
             const body = encodeURIComponent(
               `Dear ${name},\n\nThis is a friendly reminder from the office regarding your Post-Activity Report(s) that have not yet been received:\n\n` +
-              items.slice(0, 10).map((i) => `• ${i.task_rendered ?? "Activity"} — ${i.institution ?? "—"} (${fmtDate(i.date_activity ?? i.date_received)})`).join("\n") +
-              `\n\nPlease submit your PAR at your earliest convenience through the usual channel.\n\nThank you,\nAdministrative Office`
+                items
+                  .slice(0, 10)
+                  .map(
+                    (i) =>
+                      `• ${i.task_rendered ?? "Activity"} — ${i.institution ?? "—"} (${fmtDate(i.date_activity ?? i.date_received)})`,
+                  )
+                  .join("\n") +
+                `\n\nPlease submit your PAR at your earliest convenience through the usual channel.\n\nThank you,\nAdministrative Office`,
             );
             const mailto = email ? `mailto:${email}?subject=${subject}&body=${body}` : null;
 
@@ -156,17 +225,28 @@ function RemindersPage() {
                       )}
                     </div>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      {email ? <><Mail className="mr-1 inline h-3 w-3" />{email}</> : <span className="italic">No email on file — add one in Faculty</span>}
+                      {email ? (
+                        <>
+                          <Mail className="mr-1 inline h-3 w-3" />
+                          {email}
+                        </>
+                      ) : (
+                        <span className="italic">No email on file — add one in Faculty</span>
+                      )}
                     </p>
                   </div>
                   <div className="flex gap-2">
                     {mailto && (
                       <a
                         href={mailto}
-                        onClick={() => logReminder.mutate({
-                          activity_id: oldest.id, faculty_name: name, email,
-                          message: `Emailed reminder for ${items.length} pending PAR(s)`,
-                        })}
+                        onClick={() =>
+                          logReminder.mutate({
+                            activity_id: oldest.id,
+                            faculty_name: name,
+                            email,
+                            message: `Emailed reminder for ${items.length} pending PAR(s)`,
+                          })
+                        }
                         className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90"
                       >
                         <Mail className="h-3.5 w-3.5" /> Send email
@@ -174,10 +254,14 @@ function RemindersPage() {
                       </a>
                     )}
                     <button
-                      onClick={() => logReminder.mutate({
-                        activity_id: oldest.id, faculty_name: name, email,
-                        message: `Manual follow-up recorded (${items.length} pending PAR(s))`,
-                      })}
+                      onClick={() =>
+                        logReminder.mutate({
+                          activity_id: oldest.id,
+                          faculty_name: name,
+                          email,
+                          message: `Manual follow-up recorded (${items.length} pending PAR(s))`,
+                        })
+                      }
                       className="inline-flex items-center gap-1.5 rounded-md border border-input px-3 py-1.5 text-xs font-medium hover:bg-muted"
                     >
                       Log follow-up
@@ -186,18 +270,24 @@ function RemindersPage() {
                 </div>
                 <ul className="mt-3 space-y-1.5">
                   {items.slice(0, 4).map((i) => (
-                    <li key={i.id} className="flex items-start justify-between gap-3 border-t border-border pt-2 text-xs">
+                    <li
+                      key={i.id}
+                      className="flex items-start justify-between gap-3 border-t border-border pt-2 text-xs"
+                    >
                       <div className="min-w-0">
                         <p className="truncate font-medium">{i.task_rendered ?? "Activity"}</p>
                         <p className="truncate text-muted-foreground">{i.institution ?? "—"}</p>
                       </div>
                       <div className="shrink-0 text-right text-muted-foreground">
-                        <Clock className="inline h-3 w-3" /> {fmtDate(i.date_activity ?? i.date_received)}
+                        <Clock className="inline h-3 w-3" />{" "}
+                        {fmtDate(i.date_activity ?? i.date_received)}
                       </div>
                     </li>
                   ))}
                   {items.length > 4 && (
-                    <li className="pt-1 text-xs text-muted-foreground">+ {items.length - 4} more…</li>
+                    <li className="pt-1 text-xs text-muted-foreground">
+                      + {items.length - 4} more…
+                    </li>
                   )}
                 </ul>
               </div>
@@ -211,7 +301,9 @@ function RemindersPage() {
               </span>
 
               <div className="flex items-center gap-2">
-                <label htmlFor="reminder-skip-page" className="text-muted-foreground">Skip to page</label>
+                <label htmlFor="reminder-skip-page" className="text-muted-foreground">
+                  Skip to page
+                </label>
                 <input
                   id="reminder-skip-page"
                   type="number"
@@ -222,7 +314,8 @@ function RemindersPage() {
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       const n = parseInt(pageInput, 10);
-                      if (!Number.isNaN(n)) setPageIndex(Math.max(0, Math.min(n - 1, pageCount - 1)));
+                      if (!Number.isNaN(n))
+                        setPageIndex(Math.max(0, Math.min(n - 1, pageCount - 1)));
                     }
                   }}
                   className="w-16 rounded-md border border-input bg-background px-2 py-1 text-center text-sm outline-none focus:ring-2 focus:ring-ring"
@@ -265,14 +358,18 @@ function RemindersPage() {
               <h3 className="font-display font-semibold">How reminders work</h3>
             </div>
             <p className="mt-2 text-sm text-muted-foreground">
-              Click <span className="font-medium text-foreground">Send email</span> to open your mail client with a pre-filled reminder message and log the follow-up automatically. Add faculty emails in the Faculty page to enable this.
+              Click <span className="font-medium text-foreground">Send email</span> to open your
+              mail client with a pre-filled reminder message and log the follow-up automatically.
+              Add faculty emails in the Faculty page to enable this.
             </p>
           </div>
 
           <div className="rounded-xl border border-border bg-card p-4">
             <h3 className="font-display font-semibold">Recent reminder log</h3>
             <div className="mt-3 divide-y divide-border">
-              {(logs ?? []).length === 0 && <p className="py-4 text-sm text-muted-foreground">No reminders sent yet.</p>}
+              {(logs ?? []).length === 0 && (
+                <p className="py-4 text-sm text-muted-foreground">No reminders sent yet.</p>
+              )}
               {(logs ?? []).map((l) => (
                 <div key={l.id} className="py-2.5">
                   <p className="text-sm font-medium">{l.faculty_name}</p>
@@ -284,6 +381,13 @@ function RemindersPage() {
           </div>
         </aside>
       </div>
+
+      <BulkEmailModal
+        open={bulkModalOpen}
+        onOpenChange={setBulkModalOpen}
+        facultyList={facultyListForModal}
+        preselectedNames={modalPreselected}
+      />
     </div>
   );
 }

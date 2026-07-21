@@ -2,15 +2,21 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useMemo, useState } from "react";
-import { Search, Pencil, Save, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Pencil, Save, X, ChevronLeft, ChevronRight, Mail } from "lucide-react";
 import { toast } from "sonner";
+import { BulkEmailModal, PendingFaculty } from "@/components/bulk-email-modal";
 
 export const Route = createFileRoute("/_authenticated/faculty")({
   head: () => ({ meta: [{ title: "Faculty — FPARTS" }] }),
   component: FacultyPage,
 });
 
-type Contact = { faculty_name: string; email: string | null; phone: string | null; department: string | null };
+type Contact = {
+  faculty_name: string;
+  email: string | null;
+  phone: string | null;
+  department: string | null;
+};
 type ActivityRollup = { faculty_name: string; total: number; submitted: number; pending: number };
 
 function FacultyPage() {
@@ -22,7 +28,10 @@ function FacultyPage() {
   const { data: contacts } = useQuery({
     queryKey: ["faculty-contacts"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("faculty_contacts").select("*").order("faculty_name");
+      const { data, error } = await supabase
+        .from("faculty_contacts")
+        .select("*")
+        .order("faculty_name");
       if (error) throw error;
       return data as Contact[];
     },
@@ -31,12 +40,16 @@ function FacultyPage() {
   const { data: rollup } = useQuery({
     queryKey: ["faculty-rollup"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("activities").select("faculty_name,par_received_at").limit(5000);
+      const { data, error } = await supabase
+        .from("activities")
+        .select("faculty_name,par_received_at")
+        .limit(5000);
       if (error) throw error;
       const map = new Map<string, ActivityRollup>();
       for (const r of data ?? []) {
         const name = (r as { faculty_name: string; par_received_at: string | null }).faculty_name;
-        if (!map.has(name)) map.set(name, { faculty_name: name, total: 0, submitted: 0, pending: 0 });
+        if (!map.has(name))
+          map.set(name, { faculty_name: name, total: 0, submitted: 0, pending: 0 });
         const b = map.get(name)!;
         b.total++;
         if ((r as { par_received_at: string | null }).par_received_at) b.submitted++;
@@ -48,10 +61,13 @@ function FacultyPage() {
 
   const save = useMutation({
     mutationFn: async ({ name, email, phone }: { name: string; email: string; phone: string }) => {
-      const { error } = await supabase.from("faculty_contacts").update({
-        email: email || null,
-        phone: phone || null,
-      }).eq("faculty_name", name);
+      const { error } = await supabase
+        .from("faculty_contacts")
+        .update({
+          email: email || null,
+          phone: phone || null,
+        })
+        .eq("faculty_name", name);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -66,10 +82,11 @@ function FacultyPage() {
     const q = search.trim().toLowerCase();
     const list = contacts ?? [];
     if (!q) return list;
-    return list.filter((c) =>
-      c.faculty_name.toLowerCase().includes(q) ||
-      (c.department ?? "").toLowerCase().includes(q) ||
-      (c.email ?? "").toLowerCase().includes(q),
+    return list.filter(
+      (c) =>
+        c.faculty_name.toLowerCase().includes(q) ||
+        (c.department ?? "").toLowerCase().includes(q) ||
+        (c.email ?? "").toLowerCase().includes(q),
     );
   }, [contacts, search]);
 
@@ -78,8 +95,12 @@ function FacultyPage() {
   const [pageIndex, setPageIndex] = useState(0);
   const [pageInput, setPageInput] = useState("1");
 
-  useEffect(() => { setPageIndex(0); }, [search, filtered.length]);
-  useEffect(() => { setPageInput(String(pageIndex + 1)); }, [pageIndex]);
+  useEffect(() => {
+    setPageIndex(0);
+  }, [search, filtered.length]);
+  useEffect(() => {
+    setPageInput(String(pageIndex + 1));
+  }, [pageIndex]);
 
   const paginated = useMemo(
     () => filtered.slice(pageIndex * PAGE_SIZE, pageIndex * PAGE_SIZE + PAGE_SIZE),
@@ -91,13 +112,43 @@ function FacultyPage() {
     if (!Number.isNaN(n)) setPageIndex(Math.max(0, Math.min(n - 1, pageCount - 1)));
   };
 
+  const [bulkModalOpen, setBulkModalOpen] = useState(false);
+
+  const facultyWithPendingList: PendingFaculty[] = useMemo(() => {
+    const list: PendingFaculty[] = [];
+    if (!contacts || !rollup) return list;
+    for (const c of contacts) {
+      const r = rollup.get(c.faculty_name);
+      if (r && r.pending > 0) {
+        list.push({
+          faculty_name: c.faculty_name,
+          email: c.email,
+          count: r.pending,
+          overdue: false,
+        });
+      }
+    }
+    return list.sort((a, b) => b.count - a.count);
+  }, [contacts, rollup]);
+
   return (
     <div className="mx-auto max-w-7xl space-y-4 px-6 py-8">
-      <div>
-        <h1 className="font-display text-3xl font-semibold">Faculty directory</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {contacts?.length ?? 0} faculty on record. Add contact emails so you can send them PAR reminders.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="font-display text-3xl font-semibold">Faculty directory</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {contacts?.length ?? 0} faculty on record. Add contact emails so you can send them PAR
+            reminders.
+          </p>
+        </div>
+        {facultyWithPendingList.length > 0 && (
+          <button
+            onClick={() => setBulkModalOpen(true)}
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow-sm transition-all hover:opacity-90"
+          >
+            <Mail className="h-4 w-4" /> Bulk Email Reminders ({facultyWithPendingList.length})
+          </button>
+        )}
       </div>
 
       <div className="relative">
@@ -129,27 +180,48 @@ function FacultyPage() {
                 const r = rollup?.get(c.faculty_name);
                 const isEditing = editing === c.faculty_name;
                 return (
-                  <tr key={c.faculty_name} className="border-b border-border last:border-0 hover:bg-muted/40">
+                  <tr
+                    key={c.faculty_name}
+                    className="border-b border-border last:border-0 hover:bg-muted/40"
+                  >
                     <td className="px-4 py-2.5 font-medium">{c.faculty_name}</td>
-                    <td className="px-4 py-2.5 text-xs text-muted-foreground">{c.department ?? "—"}</td>
+                    <td className="px-4 py-2.5 text-xs text-muted-foreground">
+                      {c.department ?? "—"}
+                    </td>
                     <td className="px-4 py-2.5">
                       {isEditing ? (
-                        <input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} className="w-full rounded border border-input bg-background px-2 py-1 text-xs" placeholder="name@school.edu" />
+                        <input
+                          type="email"
+                          value={form.email}
+                          onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                          className="w-full rounded border border-input bg-background px-2 py-1 text-xs"
+                          placeholder="name@school.edu"
+                        />
                       ) : (
-                        <span className="text-xs">{c.email ?? <span className="text-muted-foreground">Not set</span>}</span>
+                        <span className="text-xs">
+                          {c.email ?? <span className="text-muted-foreground">Not set</span>}
+                        </span>
                       )}
                     </td>
                     <td className="px-4 py-2.5">
                       {isEditing ? (
-                        <input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} className="w-full rounded border border-input bg-background px-2 py-1 text-xs" />
+                        <input
+                          value={form.phone}
+                          onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                          className="w-full rounded border border-input bg-background px-2 py-1 text-xs"
+                        />
                       ) : (
-                        <span className="text-xs">{c.phone ?? <span className="text-muted-foreground">—</span>}</span>
+                        <span className="text-xs">
+                          {c.phone ?? <span className="text-muted-foreground">—</span>}
+                        </span>
                       )}
                     </td>
                     <td className="px-4 py-2.5 text-xs">{r?.total ?? 0}</td>
                     <td className="px-4 py-2.5">
                       {r?.pending ? (
-                        <span className="rounded-full bg-warning/25 px-2 py-0.5 text-xs font-medium text-warning-foreground">{r.pending}</span>
+                        <span className="rounded-full bg-warning/25 px-2 py-0.5 text-xs font-medium text-warning-foreground">
+                          {r.pending}
+                        </span>
                       ) : (
                         <span className="text-xs text-muted-foreground">0</span>
                       )}
@@ -157,12 +229,31 @@ function FacultyPage() {
                     <td className="px-4 py-2.5 text-right">
                       {isEditing ? (
                         <div className="flex justify-end gap-1">
-                          <button onClick={() => save.mutate({ name: c.faculty_name, email: form.email, phone: form.phone })} className="rounded-md bg-primary p-1.5 text-primary-foreground"><Save className="h-3.5 w-3.5" /></button>
-                          <button onClick={() => setEditing(null)} className="rounded-md border border-input p-1.5"><X className="h-3.5 w-3.5" /></button>
+                          <button
+                            onClick={() =>
+                              save.mutate({
+                                name: c.faculty_name,
+                                email: form.email,
+                                phone: form.phone,
+                              })
+                            }
+                            className="rounded-md bg-primary p-1.5 text-primary-foreground"
+                          >
+                            <Save className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={() => setEditing(null)}
+                            className="rounded-md border border-input p-1.5"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
                         </div>
                       ) : (
                         <button
-                          onClick={() => { setEditing(c.faculty_name); setForm({ email: c.email ?? "", phone: c.phone ?? "" }); }}
+                          onClick={() => {
+                            setEditing(c.faculty_name);
+                            setForm({ email: c.email ?? "", phone: c.phone ?? "" });
+                          }}
                           className="inline-flex items-center gap-1 rounded-md border border-input px-2 py-1 text-xs hover:bg-muted"
                         >
                           <Pencil className="h-3 w-3" /> Edit
@@ -181,7 +272,9 @@ function FacultyPage() {
               Page {pageIndex + 1} of {pageCount} ({filtered.length} faculty)
             </span>
             <div className="flex items-center gap-2">
-              <label htmlFor="faculty-skip-page" className="text-muted-foreground">Skip to page</label>
+              <label htmlFor="faculty-skip-page" className="text-muted-foreground">
+                Skip to page
+              </label>
               <input
                 id="faculty-skip-page"
                 type="number"
@@ -189,7 +282,9 @@ function FacultyPage() {
                 max={pageCount}
                 value={pageInput}
                 onChange={(e) => setPageInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") goToPage(); }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") goToPage();
+                }}
                 className="w-16 rounded-md border border-input bg-background px-2 py-1 text-center text-sm outline-none focus:ring-2 focus:ring-ring"
               />
               <button
@@ -218,6 +313,12 @@ function FacultyPage() {
           </div>
         )}
       </div>
+
+      <BulkEmailModal
+        open={bulkModalOpen}
+        onOpenChange={setBulkModalOpen}
+        facultyList={facultyWithPendingList}
+      />
     </div>
   );
 }

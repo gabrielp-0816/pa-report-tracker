@@ -21,7 +21,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
           <div>
             <p className="font-display text-xl font-bold leading-none tracking-tight">FPARTS</p>
-            <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-sidebar-foreground/70">PAR Tracking</p>
+            <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-sidebar-foreground/70">
+              PAR Tracking
+            </p>
           </div>
         </div>
 
@@ -52,14 +54,18 @@ export function AppShell({ children }: { children: ReactNode }) {
         </nav>
 
         <div className="border-t-2 border-sidebar-border px-6 py-4">
-          <p className="text-[11px] uppercase tracking-[0.18em] text-sidebar-foreground/70">v1 · Bright edition</p>
+          <p className="text-[11px] uppercase tracking-[0.18em] text-sidebar-foreground/70">
+            v1 · Bright edition
+          </p>
         </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center justify-between border-b-2 border-sidebar-border bg-sidebar px-4 py-3 md:hidden">
           <Link to="/dashboard" className="flex items-center gap-2">
-            <div className="grid h-9 w-9 place-items-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground font-display font-bold">F</div>
+            <div className="grid h-9 w-9 place-items-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground font-display font-bold">
+              F
+            </div>
             <span className="font-display font-bold text-sidebar-foreground">FPARTS</span>
           </Link>
         </header>

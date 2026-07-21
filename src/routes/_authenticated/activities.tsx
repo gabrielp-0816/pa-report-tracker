@@ -14,7 +14,15 @@ import {
 } from "@tanstack/react-table";
 import { fmtDate, fmtDateTime } from "@/lib/format";
 import { toast } from "sonner";
-import { CheckCircle2, XCircle, Search, ArrowUpDown, ChevronLeft, ChevronRight, X } from "lucide-react";
+import {
+  CheckCircle2,
+  XCircle,
+  Search,
+  ArrowUpDown,
+  ChevronLeft,
+  ChevronRight,
+  X,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/activities")({
   head: () => ({ meta: [{ title: "Activities — FPARTS" }] }),
@@ -42,8 +50,6 @@ type Activity = {
   notes: string | null;
 };
 
-
-
 function ActivitiesPage() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
@@ -51,13 +57,14 @@ function ActivitiesPage() {
   const [sorting, setSorting] = useState<SortingState>([{ id: "entry_no", desc: false }]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-
   const { data, isLoading } = useQuery({
     queryKey: ["activities-list"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("activities")
-        .select("id,entry_no,date_received,time_received,date_release_so,time_release_so,dts_ref,faculty_name,position,task_rendered,date_activity,institution,par_received_at,contribution,beneficiaries,coc_issued_at,with_coc,notes")
+        .select(
+          "id,entry_no,date_received,time_received,date_release_so,time_release_so,dts_ref,faculty_name,position,task_rendered,date_activity,institution,par_received_at,contribution,beneficiaries,coc_issued_at,with_coc,notes",
+        )
         .order("entry_no", { ascending: true, nullsFirst: false })
         .limit(5000);
       if (error) throw error;
@@ -102,35 +109,60 @@ function ActivitiesPage() {
   const columns = useMemo(() => {
     const c = createColumnHelper<Activity>();
     return [
-      c.accessor("entry_no", { header: "No.", cell: (i) => <span className="text-xs text-muted-foreground">{i.getValue() ?? "—"}</span> }),
-      c.accessor("dts_ref", { header: "DTS No.", cell: (i) => <span className="text-xs font-mono">{i.getValue() ?? "—"}</span> }),
-      c.accessor("faculty_name", { header: "Faculty", cell: (i) => <div className="font-medium">{i.getValue()}</div> }),
+      c.accessor("entry_no", {
+        header: "No.",
+        cell: (i) => <span className="text-xs text-muted-foreground">{i.getValue() ?? "—"}</span>,
+      }),
+      c.accessor("dts_ref", {
+        header: "DTS No.",
+        cell: (i) => <span className="text-xs font-mono">{i.getValue() ?? "—"}</span>,
+      }),
+      c.accessor("faculty_name", {
+        header: "Faculty",
+        cell: (i) => <div className="font-medium">{i.getValue()}</div>,
+      }),
       c.accessor("contribution", {
         header: "Contribution to Core Functions",
         cell: (i) => {
           const v = i.getValue();
           if (!v) return <span className="text-xs text-muted-foreground">—</span>;
           return (
-            <span
-              className="block max-w-[22rem] truncate text-xs text-muted-foreground"
-              title={v}
-            >
+            <span className="block max-w-[22rem] truncate text-xs text-muted-foreground" title={v}>
               {v}
             </span>
           );
         },
       }),
-      c.accessor("position", { header: "Position", cell: (i) => <span className="text-xs text-muted-foreground">{i.getValue() ?? "—"}</span> }),
-      c.accessor("task_rendered", { header: "Task", cell: (i) => <span className="text-xs">{i.getValue() ?? "—"}</span> }),
-      c.accessor("institution", { header: "Institution", cell: (i) => <span className="text-xs">{i.getValue() ?? "—"}</span> }),
-      c.accessor("date_activity", { header: "Activity Date", cell: (i) => <span className="text-xs">{i.getValue() ?? "—"}</span> }),
-      c.accessor("date_received", { header: "Received", cell: (i) => <span className="text-xs">{fmtDate(i.getValue())}</span> }),
+      c.accessor("position", {
+        header: "Position",
+        cell: (i) => <span className="text-xs text-muted-foreground">{i.getValue() ?? "—"}</span>,
+      }),
+      c.accessor("task_rendered", {
+        header: "Task",
+        cell: (i) => <span className="text-xs">{i.getValue() ?? "—"}</span>,
+      }),
+      c.accessor("institution", {
+        header: "Institution",
+        cell: (i) => <span className="text-xs">{i.getValue() ?? "—"}</span>,
+      }),
+      c.accessor("date_activity", {
+        header: "Activity Date",
+        cell: (i) => <span className="text-xs">{i.getValue() ?? "—"}</span>,
+      }),
+      c.accessor("date_received", {
+        header: "Received",
+        cell: (i) => <span className="text-xs">{fmtDate(i.getValue())}</span>,
+      }),
       c.accessor("beneficiaries", {
         header: "Beneficiaries",
         cell: (i) => {
           const v = i.getValue();
           if (!v) return <span className="text-xs text-muted-foreground">—</span>;
-          return <span className="block max-w-[16rem] truncate text-xs" title={v}>{v}</span>;
+          return (
+            <span className="block max-w-[16rem] truncate text-xs" title={v}>
+              {v}
+            </span>
+          );
         },
       }),
       c.accessor("coc_issued_at", {
@@ -138,7 +170,9 @@ function ActivitiesPage() {
         cell: (i) => {
           const v = i.getValue();
           return v ? (
-            <span className="text-xs" title={fmtDateTime(v)}>{fmtDate(v)}</span>
+            <span className="text-xs" title={fmtDateTime(v)}>
+              {fmtDate(v)}
+            </span>
           ) : (
             <span className="text-xs text-muted-foreground">—</span>
           );
@@ -214,12 +248,14 @@ function ActivitiesPage() {
         <div>
           <h1 className="font-display text-3xl font-semibold">Activities</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Every faculty activity with its PAR submission status. Mark reports as received to keep the ledger accurate.
+            Every faculty activity with its PAR submission status. Mark reports as received to keep
+            the ledger accurate.
           </p>
         </div>
         <div className="flex items-center gap-4 text-sm">
           <span className="text-muted-foreground">
-            Showing <span className="font-semibold text-foreground">{filtered.length}</span> of {rows.length}
+            Showing <span className="font-semibold text-foreground">{filtered.length}</span> of{" "}
+            {rows.length}
           </span>
         </div>
       </div>
@@ -240,7 +276,9 @@ function ActivitiesPage() {
               key={s}
               onClick={() => setStatus(s)}
               className={`rounded px-3 py-1.5 text-xs font-medium capitalize ${
-                status === s ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                status === s
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               {s}
@@ -272,10 +310,18 @@ function ActivitiesPage() {
             </thead>
             <tbody>
               {isLoading && (
-                <tr><td colSpan={13} className="px-3 py-8 text-center text-sm text-muted-foreground">Loading activities…</td></tr>
+                <tr>
+                  <td colSpan={13} className="px-3 py-8 text-center text-sm text-muted-foreground">
+                    Loading activities…
+                  </td>
+                </tr>
               )}
               {!isLoading && table.getRowModel().rows.length === 0 && (
-                <tr><td colSpan={13} className="px-3 py-8 text-center text-sm text-muted-foreground">No activities match your filters.</td></tr>
+                <tr>
+                  <td colSpan={13} className="px-3 py-8 text-center text-sm text-muted-foreground">
+                    No activities match your filters.
+                  </td>
+                </tr>
               )}
               {table.getRowModel().rows.map((row) => (
                 <tr
@@ -287,14 +333,15 @@ function ActivitiesPage() {
                     <td
                       key={cell.id}
                       className="px-3 py-2.5 align-top"
-                      onClick={(e) => { if (cell.column.id === "actions") e.stopPropagation(); }}
+                      onClick={(e) => {
+                        if (cell.column.id === "actions") e.stopPropagation();
+                      }}
                     >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
                   ))}
                 </tr>
               ))}
-
             </tbody>
           </table>
         </div>
@@ -304,7 +351,9 @@ function ActivitiesPage() {
           </span>
 
           <div className="flex items-center gap-2">
-            <label htmlFor="skip-page" className="text-muted-foreground">Skip to page</label>
+            <label htmlFor="skip-page" className="text-muted-foreground">
+              Skip to page
+            </label>
             <input
               id="skip-page"
               type="number"
@@ -312,7 +361,9 @@ function ActivitiesPage() {
               max={pageCount}
               value={pageInput}
               onChange={(e) => setPageInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") goToPage(); }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") goToPage();
+              }}
               className="w-16 rounded-md border border-input bg-background px-2 py-1 text-center text-sm outline-none focus:ring-2 focus:ring-ring"
             />
             <button
@@ -324,10 +375,18 @@ function ActivitiesPage() {
           </div>
 
           <div className="flex gap-1">
-            <button onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()} className="rounded-md border border-input p-1.5 disabled:opacity-40">
+            <button
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+              className="rounded-md border border-input p-1.5 disabled:opacity-40"
+            >
               <ChevronLeft className="h-3.5 w-3.5" />
             </button>
-            <button onClick={() => table.nextPage()} disabled={!table.getCanNextPage()} className="rounded-md border border-input p-1.5 disabled:opacity-40">
+            <button
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+              className="rounded-md border border-input p-1.5 disabled:opacity-40"
+            >
               <ChevronRight className="h-3.5 w-3.5" />
             </button>
           </div>
@@ -350,7 +409,9 @@ function ActivitiesPage() {
 function DetailRow({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="grid grid-cols-[10rem_1fr] gap-3 border-b border-border/60 py-2 last:border-0">
-      <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {label}
+      </div>
       <div className="text-sm">{value ?? <span className="text-muted-foreground">—</span>}</div>
     </div>
   );
@@ -368,7 +429,9 @@ function ActivityDetailModal({
   const [confirming, setConfirming] = useState(false);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
@@ -423,12 +486,27 @@ function ActivityDetailModal({
           <DetailRow label="Time Received" value={activity.time_received} />
           <DetailRow label="SO Release Date" value={fmtDate(activity.date_release_so)} />
           <DetailRow label="SO Release Time" value={activity.time_release_so} />
-          <DetailRow label="Contribution" value={<span className="whitespace-pre-wrap">{activity.contribution}</span>} />
-          <DetailRow label="Beneficiaries" value={<span className="whitespace-pre-wrap">{activity.beneficiaries}</span>} />
+          <DetailRow
+            label="Contribution"
+            value={<span className="whitespace-pre-wrap">{activity.contribution}</span>}
+          />
+          <DetailRow
+            label="Beneficiaries"
+            value={<span className="whitespace-pre-wrap">{activity.beneficiaries}</span>}
+          />
           <DetailRow label="With COC" value={activity.with_coc} />
-          <DetailRow label="COC Issued" value={activity.coc_issued_at ? fmtDateTime(activity.coc_issued_at) : null} />
-          <DetailRow label="PAR Received" value={activity.par_received_at ? fmtDateTime(activity.par_received_at) : null} />
-          <DetailRow label="Notes" value={<span className="whitespace-pre-wrap">{activity.notes}</span>} />
+          <DetailRow
+            label="COC Issued"
+            value={activity.coc_issued_at ? fmtDateTime(activity.coc_issued_at) : null}
+          />
+          <DetailRow
+            label="PAR Received"
+            value={activity.par_received_at ? fmtDateTime(activity.par_received_at) : null}
+          />
+          <DetailRow
+            label="Notes"
+            value={<span className="whitespace-pre-wrap">{activity.notes}</span>}
+          />
         </div>
 
         <div className="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-6 py-3">
@@ -462,9 +540,11 @@ function ActivityDetailModal({
                 Close
               </button>
               <button
-                onClick={() => submitted ? onToggleSubmitted(activity) : setConfirming(true)}
+                onClick={() => (submitted ? onToggleSubmitted(activity) : setConfirming(true))}
                 className={`rounded-md px-3 py-1.5 text-sm font-medium ${
-                  submitted ? "border border-input hover:bg-muted" : "bg-primary text-primary-foreground hover:opacity-90"
+                  submitted
+                    ? "border border-input hover:bg-muted"
+                    : "bg-primary text-primary-foreground hover:opacity-90"
                 }`}
               >
                 {submitted ? "Undo submission" : "Mark submitted"}
@@ -476,4 +556,3 @@ function ActivityDetailModal({
     </div>
   );
 }
-

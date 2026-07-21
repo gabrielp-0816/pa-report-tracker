@@ -1,8 +1,20 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ClipboardCheck, ClipboardList, Clock, TrendingUp, ArrowRight } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, CartesianGrid, Legend } from "recharts";
+import { ClipboardCheck, ClipboardList, Clock, TrendingUp, ArrowRight, Mail } from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  CartesianGrid,
+  Legend,
+} from "recharts";
 import { fmtDate } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -62,7 +74,9 @@ function Dashboard() {
     if (r.par_received_at) b.submitted++;
     else b.pending++;
   }
-  const topCampuses = Array.from(byCampus.values()).sort((a, b) => b.pending - a.pending).slice(0, 6);
+  const topCampuses = Array.from(byCampus.values())
+    .sort((a, b) => b.pending - a.pending)
+    .slice(0, 6);
 
   const statusPie = [
     { name: "Submitted", value: submitted, fill: "var(--color-success)" },
@@ -90,17 +104,33 @@ function Dashboard() {
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="rounded-xl border border-border bg-card p-5 lg:col-span-2">
           <h3 className="font-display font-semibold">Submissions by month</h3>
-          <p className="text-xs text-muted-foreground">Activities received per month, broken down by PAR status.</p>
+          <p className="text-xs text-muted-foreground">
+            Activities received per month, broken down by PAR status.
+          </p>
           <div className="mt-4 h-72">
             <ResponsiveContainer>
               <BarChart data={monthly}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
                 <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid var(--color-border)" }} />
+                <Tooltip
+                  contentStyle={{ borderRadius: 8, border: "1px solid var(--color-border)" }}
+                />
                 <Legend />
-                <Bar dataKey="submitted" stackId="a" name="Submitted" fill="var(--color-success)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="pending" stackId="a" name="Pending" fill="var(--color-warning)" radius={[4, 4, 0, 0]} />
+                <Bar
+                  dataKey="submitted"
+                  stackId="a"
+                  name="Submitted"
+                  fill="var(--color-success)"
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar
+                  dataKey="pending"
+                  stackId="a"
+                  name="Pending"
+                  fill="var(--color-warning)"
+                  radius={[4, 4, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -112,8 +142,16 @@ function Dashboard() {
           <div className="mt-4 h-72">
             <ResponsiveContainer>
               <PieChart>
-                <Pie data={statusPie} dataKey="value" innerRadius={60} outerRadius={95} paddingAngle={4}>
-                  {statusPie.map((s, i) => <Cell key={i} fill={s.fill} />)}
+                <Pie
+                  data={statusPie}
+                  dataKey="value"
+                  innerRadius={60}
+                  outerRadius={95}
+                  paddingAngle={4}
+                >
+                  {statusPie.map((s, i) => (
+                    <Cell key={i} fill={s.fill} />
+                  ))}
                 </Pie>
                 <Tooltip />
                 <Legend />
@@ -127,7 +165,10 @@ function Dashboard() {
         <div className="rounded-xl border border-border bg-card p-5">
           <div className="flex items-center justify-between">
             <h3 className="font-display font-semibold">Top campuses / units by pending PARs</h3>
-            <Link to="/activities" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+            <Link
+              to="/activities"
+              className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+            >
               View all <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
@@ -138,8 +179,18 @@ function Dashboard() {
                 <XAxis type="number" tick={{ fontSize: 11 }} />
                 <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} width={140} />
                 <Tooltip />
-                <Bar dataKey="pending" name="Pending" fill="var(--color-warning)" radius={[0, 4, 4, 0]} />
-                <Bar dataKey="submitted" name="Submitted" fill="var(--color-success)" radius={[0, 4, 4, 0]} />
+                <Bar
+                  dataKey="pending"
+                  name="Pending"
+                  fill="var(--color-warning)"
+                  radius={[0, 4, 4, 0]}
+                />
+                <Bar
+                  dataKey="submitted"
+                  name="Submitted"
+                  fill="var(--color-success)"
+                  radius={[0, 4, 4, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -148,10 +199,22 @@ function Dashboard() {
         <div className="rounded-xl border border-border bg-card p-5">
           <div className="flex items-center justify-between">
             <h3 className="font-display font-semibold">Recent pending PARs</h3>
-            <Link to="/activities" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
-              View all <ArrowRight className="h-3 w-3" />
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link
+                to="/reminders"
+                className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+              >
+                <Mail className="h-3.5 w-3.5" /> Bulk Email Reminders
+              </Link>
+              <Link
+                to="/activities"
+                className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:underline"
+              >
+                View all <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
           </div>
+
           <div className="mt-3 divide-y divide-border">
             {isLoading && <p className="py-6 text-sm text-muted-foreground">Loading…</p>}
             {!isLoading && recentPending.length === 0 && (
@@ -178,7 +241,17 @@ function Dashboard() {
   );
 }
 
-function StatCard({ icon: Icon, label, value, tone }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string | number; tone: "primary" | "success" | "warning" | "accent" }) {
+function StatCard({
+  icon: Icon,
+  label,
+  value,
+  tone,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string | number;
+  tone: "primary" | "success" | "warning" | "accent";
+}) {
   const toneClass = {
     primary: "bg-primary/10 text-primary",
     success: "bg-success/15 text-success",

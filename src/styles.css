@@ -56,8 +56,8 @@
   --radius: 1rem;
 
   /* Yellow-dominant palette: warm cream canvas, ink foreground, bright yellow primary */
-  --background: oklch(0.985 0.03 95);          /* warm cream */
-  --foreground: oklch(0.18 0.02 80);            /* deep ink */
+  --background: oklch(0.985 0.03 95); /* warm cream */
+  --foreground: oklch(0.18 0.02 80); /* deep ink */
 
   --card: oklch(1 0.008 95);
   --card-foreground: oklch(0.18 0.02 80);
@@ -65,23 +65,23 @@
   --popover: oklch(1 0.008 95);
   --popover-foreground: oklch(0.18 0.02 80);
 
-  --primary: oklch(0.86 0.18 92);               /* vivid yellow */
+  --primary: oklch(0.86 0.18 92); /* vivid yellow */
   --primary-foreground: oklch(0.18 0.03 80);
 
-  --secondary: oklch(0.94 0.05 95);             /* pale butter */
+  --secondary: oklch(0.94 0.05 95); /* pale butter */
   --secondary-foreground: oklch(0.22 0.03 80);
 
   --muted: oklch(0.955 0.025 95);
   --muted-foreground: oklch(0.45 0.02 80);
 
-  --accent: oklch(0.2 0.02 80);                 /* ink accent for contrast */
+  --accent: oklch(0.2 0.02 80); /* ink accent for contrast */
   --accent-foreground: oklch(0.92 0.16 95);
 
   --destructive: oklch(0.58 0.22 27);
   --destructive-foreground: oklch(0.99 0.01 95);
   --success: oklch(0.6 0.15 145);
   --success-foreground: oklch(0.99 0.01 95);
-  --warning: oklch(0.72 0.19 55);               /* amber warning */
+  --warning: oklch(0.72 0.19 55); /* amber warning */
   --warning-foreground: oklch(0.2 0.03 80);
 
   --border: oklch(0.88 0.04 92);
@@ -145,16 +145,34 @@
 }
 
 @layer base {
-  * { border-color: var(--color-border); }
-  html { font-family: var(--font-sans); }
+  * {
+    border-color: var(--color-border);
+  }
+  html {
+    font-family: var(--font-sans);
+  }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     background-image:
-      radial-gradient(1200px 600px at 100% -10%, color-mix(in oklab, var(--color-primary) 35%, transparent), transparent 60%),
-      radial-gradient(900px 500px at -10% 110%, color-mix(in oklab, var(--color-primary) 20%, transparent), transparent 60%);
+      radial-gradient(
+        1200px 600px at 100% -10%,
+        color-mix(in oklab, var(--color-primary) 35%, transparent),
+        transparent 60%
+      ),
+      radial-gradient(
+        900px 500px at -10% 110%,
+        color-mix(in oklab, var(--color-primary) 20%, transparent),
+        transparent 60%
+      );
     background-attachment: fixed;
   }
-  h1, h2, h3, .font-display { font-family: var(--font-display); letter-spacing: -0.015em; }
+  h1,
+  h2,
+  h3,
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.015em;
+  }
 }
