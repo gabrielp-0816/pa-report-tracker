@@ -30,6 +30,7 @@ import {
   CheckSquare,
   Square,
   AlertCircle,
+  Save,
 } from "lucide-react";
 
 export type PendingFaculty = {
@@ -77,9 +78,27 @@ export function BulkEmailModal({
   const [activeTab, setActiveTab] = useState<"recipients" | "template" | "preview">("recipients");
   const [search, setSearch] = useState("");
   const [selectedNames, setSelectedNames] = useState<Set<string>>(new Set());
-  const [subject, setSubject] = useState(DEFAULT_EMAIL_SUBJECT);
-  const [body, setBody] = useState(DEFAULT_EMAIL_BODY);
+  const [subject, setSubject] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("bulk_email_subject");
+      if (saved) return saved;
+    }
+    return DEFAULT_EMAIL_SUBJECT;
+  });
+  const [body, setBody] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("bulk_email_body");
+      if (saved) return saved;
+    }
+    return DEFAULT_EMAIL_BODY;
+  });
   const [copied, setCopied] = useState(false);
+
+  const handleSaveTemplate = () => {
+    localStorage.setItem("bulk_email_subject", subject);
+    localStorage.setItem("bulk_email_body", body);
+    toast.success("Default email template saved successfully!");
+  };
   const [previewFacultyName, setPreviewFacultyName] = useState<string>("");
 
   // Initialize selected names when modal opens or preselectedNames change
@@ -423,19 +442,30 @@ export function BulkEmailModal({
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-semibold text-foreground">Email Subject</label>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setSubject(DEFAULT_EMAIL_SUBJECT);
-                    setBody(DEFAULT_EMAIL_BODY);
-                    toast.info("Reset email template to default!");
-                  }}
-                  className="text-xs h-7 gap-1 text-muted-foreground hover:text-foreground"
-                >
-                  <RotateCcw className="h-3 w-3" /> Reset to Default
-                </Button>
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSaveTemplate}
+                    className="text-xs h-7 gap-1 text-primary hover:text-primary-foreground hover:bg-primary"
+                  >
+                    <Save className="h-3 w-3" /> Save Template
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSubject(DEFAULT_EMAIL_SUBJECT);
+                      setBody(DEFAULT_EMAIL_BODY);
+                      toast.info("Reset to default system template. Click 'Save Template' if you want to make this permanent.");
+                    }}
+                    className="text-xs h-7 gap-1 text-muted-foreground hover:text-foreground"
+                  >
+                    <RotateCcw className="h-3 w-3" /> Reset to Default
+                  </Button>
+                </div>
               </div>
 
               <Input
