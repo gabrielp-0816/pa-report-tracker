@@ -216,70 +216,69 @@ function RemindersPage() {
 
             return (
               <div key={name} className="rounded-xl border border-border bg-card p-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p
-                        onClick={() => setSelectedProfessor({ name, items, email })}
-                        className="font-display text-base font-semibold hover:text-primary hover:underline cursor-pointer transition-colors"
-                      >
-                        {name}
-                      </p>
-                      <span
-                        onClick={() => setSelectedProfessor({ name, items, email })}
-                        className="rounded-full bg-warning/25 hover:bg-warning/35 cursor-pointer px-2 py-0.5 text-xs font-medium text-warning-foreground transition-all"
-                      >
-                        {items.length} pending
-                      </span>
-                      {overdue && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-destructive/15 px-2 py-0.5 text-xs font-medium text-destructive">
-                          <AlertTriangle className="h-3 w-3" /> {daysOld}d overdue
-                        </span>
-                      )}
-                    </div>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {email ? (
-                        <>
-                          <Mail className="mr-1 inline h-3 w-3" />
-                          {email}
-                        </>
-                      ) : (
-                        <span className="italic">No email on file — add one in Faculty</span>
-                      )}
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p
+                      onClick={() => setSelectedProfessor({ name, items, email })}
+                      className="font-display text-base font-semibold hover:text-primary hover:underline cursor-pointer transition-colors"
+                    >
+                      {name}
                     </p>
-                  </div>
-                  <div className="flex gap-2">
-                    {mailto && (
-                      <a
-                        href={mailto}
+                    <span
+                      onClick={() => setSelectedProfessor({ name, items, email })}
+                      className="rounded-full bg-warning/25 hover:bg-warning/35 cursor-pointer px-2 py-0.5 text-xs font-medium text-warning-foreground transition-all"
+                    >
+                      {items.length} pending
+                    </span>
+                    {overdue && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-destructive/15 px-2 py-0.5 text-xs font-medium text-destructive">
+                        <AlertTriangle className="h-3 w-3" /> {daysOld}d overdue
+                      </span>
+                    )}
+
+                    <div className="flex items-center gap-2 ml-2">
+                      {mailto && (
+                        <a
+                          href={mailto}
+                          onClick={() =>
+                            logReminder.mutate({
+                              activity_id: oldest.id,
+                              faculty_name: name,
+                              email,
+                              message: `Emailed reminder for ${items.length} pending PAR(s)`,
+                            })
+                          }
+                          className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90"
+                        >
+                          <Mail className="h-3.5 w-3.5" /> Send email
+                          <ExternalLink className="h-3 w-3 opacity-70" />
+                        </a>
+                      )}
+                      <button
                         onClick={() =>
                           logReminder.mutate({
                             activity_id: oldest.id,
                             faculty_name: name,
                             email,
-                            message: `Emailed reminder for ${items.length} pending PAR(s)`,
+                            message: `Manual follow-up recorded (${items.length} pending PAR(s))`,
                           })
                         }
-                        className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90"
+                        className="inline-flex items-center gap-1.5 rounded-md border border-input px-3 py-1.5 text-xs font-medium hover:bg-muted"
                       >
-                        <Mail className="h-3.5 w-3.5" /> Send email
-                        <ExternalLink className="h-3 w-3 opacity-70" />
-                      </a>
-                    )}
-                    <button
-                      onClick={() =>
-                        logReminder.mutate({
-                          activity_id: oldest.id,
-                          faculty_name: name,
-                          email,
-                          message: `Manual follow-up recorded (${items.length} pending PAR(s))`,
-                        })
-                      }
-                      className="inline-flex items-center gap-1.5 rounded-md border border-input px-3 py-1.5 text-xs font-medium hover:bg-muted"
-                    >
-                      Log follow-up
-                    </button>
+                        Log follow-up
+                      </button>
+                    </div>
                   </div>
+                  <p className="text-xs text-muted-foreground">
+                    {email ? (
+                      <>
+                        <Mail className="mr-1 inline h-3 w-3" />
+                        {email}
+                      </>
+                    ) : (
+                      <span className="italic">No email on file — add one in Faculty</span>
+                    )}
+                  </p>
                 </div>
                 <ul className="mt-3 space-y-1.5">
                   {items.slice(0, 4).map((i) => (
