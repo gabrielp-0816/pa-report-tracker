@@ -268,7 +268,14 @@ function ActivitiesPage() {
           return (
             <button
               disabled={markMutation.isPending}
-              onClick={() => markMutation.mutate({ id: row.original.id, submitted: !submitted })}
+              onClick={() => {
+                const message = submitted
+                  ? "Are you sure you want to undo submission for this activity?"
+                  : "Are you sure you want to mark this activity as submitted?";
+                if (window.confirm(message)) {
+                  markMutation.mutate({ id: row.original.id, submitted: !submitted });
+                }
+              }}
               className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${submitted
                   ? "border border-input hover:bg-muted"
                   : "bg-primary text-primary-foreground hover:opacity-90"
@@ -778,7 +785,9 @@ function ActivityDetailModal({
           {confirming ? (
             <>
               <span className="mr-2 text-sm text-muted-foreground">
-                Mark this activity as submitted?
+                {submitted
+                  ? "Undo submission for this activity?"
+                  : "Mark this activity as submitted?"}
               </span>
               <button
                 onClick={() => setConfirming(false)}
@@ -811,7 +820,7 @@ function ActivityDetailModal({
                 <Pencil className="h-3.5 w-3.5" /> Edit
               </button>
               <button
-                onClick={() => (submitted ? onToggleSubmitted(activity) : setConfirming(true))}
+                onClick={() => setConfirming(true)}
                 className={`rounded-md px-3 py-1.5 text-sm font-medium ${
                   submitted
                     ? "border border-input hover:bg-muted"
@@ -929,12 +938,15 @@ function ActivityFormModal({
           par_urls: [...prev.par_urls, ...uploadedUrls],
           // Maintain legacy fallback to first item
           scanned_report_url: prev.scanned_report_url ?? uploadedUrls[0],
+          // Automatically mark as submitted if not already set
+          par_received_at: prev.par_received_at || new Date().toISOString(),
         }));
         toast.success(`Uploaded ${uploadedUrls.length} PAR attachment(s)!`);
       } else {
         setValues((prev) => ({
           ...prev,
           coc_urls: [...prev.coc_urls, ...uploadedUrls],
+          with_coc: "YES",
         }));
         toast.success(`Uploaded ${uploadedUrls.length} COC attachment(s)!`);
       }
