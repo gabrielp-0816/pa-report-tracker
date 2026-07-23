@@ -18,7 +18,7 @@ import { fmtDate, fmtDateTime, daysBetween } from "@/lib/format";
 import { BulkEmailModal, PendingFaculty } from "@/components/bulk-email-modal";
 
 export const Route = createFileRoute("/_authenticated/reminders")({
-  head: () => ({ meta: [{ title: "Reminders — FPARTS" }] }),
+  head: () => ({ meta: [{ title: "Reminders — TAAS 2025" }] }),
   component: RemindersPage,
 });
 

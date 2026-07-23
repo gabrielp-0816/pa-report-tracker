@@ -18,7 +18,7 @@ import {
 import { fmtDate } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard — FPARTS" }] }),
+  head: () => ({ meta: [{ title: "Dashboard — TAAS 2025" }] }),
   component: Dashboard,
 });
 

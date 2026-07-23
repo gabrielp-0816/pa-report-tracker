@@ -66,13 +66,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "FPARTS — Faculty Post-Activity Report Tracking" },
+      { title: "TAAS 2025 — Faculty Post-Activity Report Tracking" },
       {
         name: "description",
         content:
           "Monitor, track, and follow up on faculty Post-Activity Report submissions for your institution.",
       },
-      { property: "og:title", content: "FPARTS — Faculty Post-Activity Report Tracking" },
+      { property: "og:title", content: "TAAS 2025 — Faculty Post-Activity Report Tracking" },
       {
         property: "og:description",
         content:
@@ -80,7 +80,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "FPARTS — Faculty Post-Activity Report Tracking" },
+      { name: "twitter:title", content: "TAAS 2025 — Faculty Post-Activity Report Tracking" },
       {
         name: "twitter:description",
         content:

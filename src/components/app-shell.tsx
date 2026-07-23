@@ -16,11 +16,9 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen">
       <aside className="hidden w-72 shrink-0 flex-col border-r-2 border-sidebar-border bg-sidebar text-sidebar-foreground md:flex">
         <div className="flex items-center gap-3 px-6 py-6">
-          <div className="grid h-11 w-11 place-items-center rounded-2xl bg-sidebar-primary text-sidebar-primary-foreground font-display text-xl font-bold shadow-[0_4px_0_0_rgba(0,0,0,0.15)]">
-            F
-          </div>
+          <img src="/pup-logo.svg" alt="PUP Logo" className="h-11 w-11 object-contain" />
           <div>
-            <p className="font-display text-xl font-bold leading-none tracking-tight">FPARTS</p>
+            <p className="font-display text-xl font-bold leading-none tracking-tight">TAAS 2025</p>
             <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-sidebar-foreground/70">
               PAR Tracking
             </p>
@@ -63,10 +61,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center justify-between border-b-2 border-sidebar-border bg-sidebar px-4 py-3 md:hidden">
           <Link to="/dashboard" className="flex items-center gap-2">
-            <div className="grid h-9 w-9 place-items-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground font-display font-bold">
-              F
-            </div>
-            <span className="font-display font-bold text-sidebar-foreground">FPARTS</span>
+            <img src="/pup-logo.svg" alt="PUP Logo" className="h-9 w-9 object-contain" />
+            <span className="font-display font-bold text-sidebar-foreground">TAAS 2025</span>
           </Link>
         </header>
         <nav className="flex gap-1.5 overflow-x-auto border-b-2 border-sidebar-border bg-sidebar px-3 py-2 md:hidden">

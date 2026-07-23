@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { BulkEmailModal, PendingFaculty } from "@/components/bulk-email-modal";
 
 export const Route = createFileRoute("/_authenticated/faculty")({
-  head: () => ({ meta: [{ title: "Faculty — FPARTS" }] }),
+  head: () => ({ meta: [{ title: "Faculty — TAAS 2025" }] }),
   component: FacultyPage,
 });
 
