@@ -171,6 +171,19 @@ function ActivitiesPage() {
   });
 
   const rows = data ?? [];
+
+  const nextEntryNo = useMemo(() => {
+    if (rows.length === 0) return 1;
+    const nums = rows.map((r) => r.entry_no).filter((n): n is number => typeof n === "number");
+    return nums.length > 0 ? Math.max(...nums) + 1 : 1;
+  }, [rows]);
+
+  const initialFormValues = useMemo(() => {
+    return {
+      ...EMPTY_FORM,
+      entry_no: nextEntryNo,
+    };
+  }, [nextEntryNo]);
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return rows.filter((r) => {
@@ -501,7 +514,7 @@ function ActivitiesPage() {
       {creating && (
         <ActivityFormModal
           title="New activity"
-          initial={EMPTY_FORM}
+          initial={initialFormValues}
           onClose={() => setCreating(false)}
           onSave={(values) => createMutation.mutateAsync(values)}
           saving={createMutation.isPending}
