@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useSearch, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
@@ -92,11 +92,27 @@ const EMPTY_FORM: ActivityFormValues = {
 
 function ActivitiesPage() {
   const qc = useQueryClient();
+  const searchParams = useSearch({ strict: false });
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<"all" | "pending" | "submitted">("all");
   const [sorting, setSorting] = useState<SortingState>([{ id: "entry_no", desc: false }]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+
+  useEffect(() => {
+    if (searchParams && typeof searchParams === "object" && "id" in searchParams) {
+      const qId = (searchParams as any).id;
+      if (qId && typeof qId === "string") {
+        setSelectedId(qId);
+      }
+    }
+  }, [searchParams]);
+
+  const handleClose = () => {
+    setSelectedId(null);
+    navigate({ to: "/activities", search: {} as any });
+  };
 
   const { data, isLoading } = useQuery({
     queryKey: ["activities-list"],
@@ -471,12 +487,12 @@ function ActivitiesPage() {
       {selected && (
         <ActivityDetailModal
           activity={selected}
-          onClose={() => setSelectedId(null)}
+          onClose={handleClose}
           onToggleSubmitted={(a) =>
             markMutation.mutate({ id: a.id, submitted: !a.par_received_at })
           }
           onSave={(values) =>
-            updateMutation.mutateAsync({ id: selected.id, values }).then(() => setSelectedId(null))
+            updateMutation.mutateAsync({ id: selected.id, values }).then(() => handleClose())
           }
           saving={updateMutation.isPending}
         />

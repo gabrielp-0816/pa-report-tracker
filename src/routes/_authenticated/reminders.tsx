@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useMemo, useState } from "react";
@@ -484,9 +484,11 @@ function ProfessorActivitiesModal({
               const daysOld = daysBetween(i.date_received);
               const overdue = (daysOld ?? 0) > 14;
               return (
-                <div
+                <Link
                   key={i.id}
-                  className="rounded-xl border border-border/70 bg-card p-4 hover:bg-muted/10 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                  to="/activities"
+                  search={{ id: i.id } as any}
+                  className="rounded-xl border border-border/70 bg-card p-4 hover:bg-muted/10 hover:border-primary/50 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-left"
                 >
                   <div className="space-y-1 min-w-0 flex-1">
                     <div className="flex items-center gap-2">
@@ -511,7 +513,7 @@ function ProfessorActivitiesModal({
                       </span>
                     )}
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>
