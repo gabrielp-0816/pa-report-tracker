@@ -185,7 +185,7 @@ function RemindersPage() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.7fr_1fr] lg:grid-cols-1 grid-cols-1">
-        <div className="space-y-3">
+        <div className="space-y-3 min-w-0">
           {isLoading && <p className="text-sm text-muted-foreground">Loading pending PARs…</p>}
           {!isLoading && grouped.length === 0 && (
             <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
@@ -367,7 +367,7 @@ function RemindersPage() {
           )}
         </div>
 
-        <aside className="space-y-3">
+        <aside className="space-y-3 min-w-0">
           <div className="rounded-xl border border-border bg-card p-4">
             <div className="flex items-center gap-2">
               <BellRing className="h-4 w-4 text-primary" />
