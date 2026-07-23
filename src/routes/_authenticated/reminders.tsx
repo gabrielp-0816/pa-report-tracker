@@ -122,6 +122,11 @@ function RemindersPage() {
 
   const [bulkModalOpen, setBulkModalOpen] = useState(false);
   const [modalPreselected, setModalPreselected] = useState<string[]>([]);
+  const [selectedProfessor, setSelectedProfessor] = useState<{
+    name: string;
+    items: Pending[];
+    email: string | null;
+  } | null>(null);
 
   const facultyListForModal: PendingFaculty[] = useMemo(() => {
     return grouped.map(([name, items]) => {
@@ -179,7 +184,7 @@ function RemindersPage() {
         </button>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1.7fr_1fr]">
+      <div className="grid gap-6 xl:grid-cols-[1.7fr_1fr] lg:grid-cols-1 grid-cols-1">
         <div className="space-y-3">
           {isLoading && <p className="text-sm text-muted-foreground">Loading pending PARs…</p>}
           {!isLoading && grouped.length === 0 && (
@@ -214,8 +219,16 @@ function RemindersPage() {
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-display text-base font-semibold">{name}</p>
-                      <span className="rounded-full bg-warning/25 px-2 py-0.5 text-xs font-medium text-warning-foreground">
+                      <p
+                        onClick={() => setSelectedProfessor({ name, items, email })}
+                        className="font-display text-base font-semibold hover:text-primary hover:underline cursor-pointer transition-colors"
+                      >
+                        {name}
+                      </p>
+                      <span
+                        onClick={() => setSelectedProfessor({ name, items, email })}
+                        className="rounded-full bg-warning/25 hover:bg-warning/35 cursor-pointer px-2 py-0.5 text-xs font-medium text-warning-foreground transition-all"
+                      >
                         {items.length} pending
                       </span>
                       {overdue && (
@@ -285,8 +298,11 @@ function RemindersPage() {
                     </li>
                   ))}
                   {items.length > 4 && (
-                    <li className="pt-1 text-xs text-muted-foreground">
-                      + {items.length - 4} more…
+                    <li
+                      onClick={() => setSelectedProfessor({ name, items, email })}
+                      className="pt-1 text-xs text-muted-foreground hover:text-primary hover:underline cursor-pointer transition-colors"
+                    >
+                      + {items.length - 4} more… (click to view all)
                     </li>
                   )}
                 </ul>
@@ -388,6 +404,129 @@ function RemindersPage() {
         facultyList={facultyListForModal}
         preselectedNames={modalPreselected}
       />
+
+      {selectedProfessor && (
+        <ProfessorActivitiesModal
+          name={selectedProfessor.name}
+          email={selectedProfessor.email}
+          items={selectedProfessor.items}
+          onClose={() => setSelectedProfessor(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function ProfessorActivitiesModal({
+  name,
+  email,
+  items,
+  onClose,
+}: {
+  name: string;
+  email: string | null;
+  items: Pending[];
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in"
+      onClick={onClose}
+    >
+      <div
+        className="max-h-[85vh] w-full max-w-3xl overflow-hidden rounded-2xl border border-border bg-card shadow-2xl flex flex-col scale-in"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-start justify-between gap-3 border-b border-border bg-muted/40 px-6 py-4 shrink-0">
+          <div>
+            <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Faculty Pending PARs
+            </div>
+            <h2 className="mt-1 font-display text-xl font-semibold">{name}</h2>
+            {email && (
+              <p className="mt-1 text-xs text-muted-foreground flex items-center gap-1">
+                <Mail className="h-3 w-3" /> {email}
+              </p>
+            )}
+          </div>
+          <button
+            onClick={onClose}
+            aria-label="Close modal"
+            className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          >
+            <span className="sr-only">Close</span>
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-4 min-h-0">
+          <div className="flex items-center justify-between text-xs text-muted-foreground bg-muted/20 px-4 py-2.5 rounded-lg border border-border/50">
+            <span>Total pending activities requiring PAR:</span>
+            <span className="font-semibold text-warning-foreground bg-warning/25 px-2 py-0.5 rounded-full">
+              {items.length} Pending
+            </span>
+          </div>
+
+          <div className="space-y-3">
+            {items.map((i, index) => {
+              const daysOld = daysBetween(i.date_received);
+              const overdue = (daysOld ?? 0) > 14;
+              return (
+                <div
+                  key={i.id}
+                  className="rounded-xl border border-border/70 bg-card p-4 hover:bg-muted/10 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                >
+                  <div className="space-y-1 min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        #{index + 1}
+                      </span>
+                      <p className="font-medium text-sm text-foreground truncate">
+                        {i.task_rendered ?? "Activity"}
+                      </p>
+                    </div>
+                    <p className="text-xs text-muted-foreground truncate pl-6">
+                      {i.institution ?? "—"}
+                    </p>
+                  </div>
+                  <div className="flex flex-row sm:flex-col items-start sm:items-end justify-between sm:justify-center gap-1.5 shrink-0 pl-6 sm:pl-0">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Clock className="h-3 w-3" /> {fmtDate(i.date_activity ?? i.date_received)}
+                    </span>
+                    {overdue && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-destructive/15 px-2 py-0.5 text-[10px] font-medium text-destructive">
+                        <AlertTriangle className="h-2.5 w-2.5" /> {daysOld}d overdue
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-6 py-3 shrink-0">
+          <button
+            onClick={onClose}
+            className="rounded-md border border-input px-4 py-2 text-xs font-semibold hover:bg-muted transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
