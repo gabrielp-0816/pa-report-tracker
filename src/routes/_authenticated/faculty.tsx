@@ -23,7 +23,11 @@ function FacultyPage() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<string | null>(null);
-  const [form, setForm] = useState<{ email: string; phone: string }>({ email: "", phone: "" });
+  const [form, setForm] = useState<{ department: string; email: string; phone: string }>({
+    department: "",
+    email: "",
+    phone: "",
+  });
 
   const { data: contacts } = useQuery({
     queryKey: ["faculty-contacts"],
@@ -60,10 +64,21 @@ function FacultyPage() {
   });
 
   const save = useMutation({
-    mutationFn: async ({ name, email, phone }: { name: string; email: string; phone: string }) => {
+    mutationFn: async ({
+      name,
+      department,
+      email,
+      phone,
+    }: {
+      name: string;
+      department: string;
+      email: string;
+      phone: string;
+    }) => {
       const { error } = await supabase
         .from("faculty_contacts")
         .update({
+          department: department || null,
           email: email || null,
           phone: phone || null,
         })
@@ -185,8 +200,19 @@ function FacultyPage() {
                     className="border-b border-border last:border-0 hover:bg-muted/40"
                   >
                     <td className="px-4 py-2.5 font-medium">{c.faculty_name}</td>
-                    <td className="px-4 py-2.5 text-xs text-muted-foreground">
-                      {c.department ?? "—"}
+                    <td className="px-4 py-2.5">
+                      {isEditing ? (
+                        <input
+                          value={form.department}
+                          onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
+                          className="w-full rounded border border-input bg-background px-2 py-1 text-xs"
+                          placeholder="Department or Campus"
+                        />
+                      ) : (
+                        <span className="text-xs text-muted-foreground">
+                          {c.department ?? "—"}
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-2.5">
                       {isEditing ? (
@@ -233,6 +259,7 @@ function FacultyPage() {
                             onClick={() =>
                               save.mutate({
                                 name: c.faculty_name,
+                                department: form.department,
                                 email: form.email,
                                 phone: form.phone,
                               })
@@ -252,7 +279,11 @@ function FacultyPage() {
                         <button
                           onClick={() => {
                             setEditing(c.faculty_name);
-                            setForm({ email: c.email ?? "", phone: c.phone ?? "" });
+                            setForm({
+                              department: c.department ?? "",
+                              email: c.email ?? "",
+                              phone: c.phone ?? "",
+                            });
                           }}
                           className="inline-flex items-center gap-1 rounded-md border border-input px-2 py-1 text-xs hover:bg-muted"
                         >
