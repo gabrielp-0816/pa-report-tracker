@@ -887,6 +887,23 @@ function toDateInput(v: string | null): string {
   return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : "";
 }
 
+function toDateTimeLocalInput(v: string | null | undefined): string {
+  if (!v) return "";
+  const d = new Date(v);
+  if (Number.isNaN(d.getTime())) {
+    return v.length >= 16 ? v.slice(0, 16) : v;
+  }
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function fromDateTimeLocalInput(v: string | null | undefined): string | null {
+  if (!v || !v.trim()) return null;
+  const d = new Date(v);
+  if (Number.isNaN(d.getTime())) return v;
+  return d.toISOString();
+}
+
 function ActivityFormModal({
   title,
   initial,
@@ -1012,7 +1029,12 @@ function ActivityFormModal({
       return;
     }
     try {
-      await onSave(values);
+      const formattedValues: ActivityFormValues = {
+        ...values,
+        coc_issued_at: fromDateTimeLocalInput(values.coc_issued_at),
+        par_received_at: fromDateTimeLocalInput(values.par_received_at),
+      };
+      await onSave(formattedValues);
     } catch {
       // toast handled by mutation
     }
@@ -1133,26 +1155,16 @@ function ActivityFormModal({
               <input
                 type="datetime-local"
                 className={inputCls}
-                value={values.coc_issued_at ? values.coc_issued_at.slice(0, 16) : ""}
-                onChange={(e) =>
-                  set(
-                    "coc_issued_at",
-                    e.target.value ? new Date(e.target.value).toISOString() : null,
-                  )
-                }
+                value={toDateTimeLocalInput(values.coc_issued_at)}
+                onChange={(e) => set("coc_issued_at", nullable(e.target.value))}
               />
             </FormField>
             <FormField label="PAR Received At">
               <input
                 type="datetime-local"
                 className={inputCls}
-                value={values.par_received_at ? values.par_received_at.slice(0, 16) : ""}
-                onChange={(e) =>
-                  set(
-                    "par_received_at",
-                    e.target.value ? new Date(e.target.value).toISOString() : null,
-                  )
-                }
+                value={toDateTimeLocalInput(values.par_received_at)}
+                onChange={(e) => set("par_received_at", nullable(e.target.value))}
               />
             </FormField>
             <div className="sm:col-span-2">
