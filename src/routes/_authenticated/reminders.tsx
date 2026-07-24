@@ -140,6 +140,12 @@ function RemindersPage() {
         count: items.length,
         overdue,
         oldestActivityId: oldest?.id,
+        activities: items.map((i) => ({
+          task_rendered: i.task_rendered,
+          institution: i.institution,
+          date_activity: i.date_activity,
+          date_received: i.date_received,
+        })),
       };
     });
   }, [grouped, contacts]);
@@ -249,23 +255,15 @@ function RemindersPage() {
                     </p>
                   </div>
                   <div className="flex gap-2 shrink-0">
-                    {mailto && (
-                      <a
-                        href={mailto}
-                        onClick={() =>
-                          logReminder.mutate({
-                            activity_id: oldest.id,
-                            faculty_name: name,
-                            email,
-                            message: `Emailed reminder for ${items.length} pending PAR(s)`,
-                          })
-                        }
-                        className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90"
-                      >
-                        <Mail className="h-3.5 w-3.5" /> Send email
-                        <ExternalLink className="h-3 w-3 opacity-70" />
-                      </a>
-                    )}
+                    <button
+                      onClick={() => {
+                        setModalPreselected([name]);
+                        setBulkModalOpen(true);
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90"
+                    >
+                      <Mail className="h-3.5 w-3.5" /> Send email
+                    </button>
                     <button
                       onClick={() =>
                         logReminder.mutate({

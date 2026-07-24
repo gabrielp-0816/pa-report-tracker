@@ -33,12 +33,22 @@ import {
   Save,
 } from "lucide-react";
 
+import { fmtDate } from "@/lib/format";
+
+export type PendingActivityItem = {
+  task_rendered?: string | null;
+  institution?: string | null;
+  date_activity?: string | null;
+  date_received?: string | null;
+};
+
 export type PendingFaculty = {
   faculty_name: string;
   email: string | null;
   count: number;
   overdue: boolean;
   oldestActivityId?: string;
+  activities?: PendingActivityItem[];
 };
 
 interface BulkEmailModalProps {
@@ -49,12 +59,14 @@ interface BulkEmailModalProps {
   onSuccess?: () => void;
 }
 
-export const DEFAULT_EMAIL_SUBJECT =
-  "Reminder: Pending Post-Activity Report (PA Report) Submission";
+export const DEFAULT_SINGLE_EMAIL_SUBJECT =
+  "Reminder: Pending Post-Activity Report (PA Report) - {faculty_name}";
 
-export const DEFAULT_EMAIL_BODY = `Dear {faculty_name},
+export const DEFAULT_SINGLE_EMAIL_BODY = `Dear {faculty_name},
 
-This is a friendly reminder from the Administrative Office regarding your Post-Activity Report(s) (PA Report) for completed activities that are currently pending submission ({pending_count} pending report(s)).
+This is a friendly reminder from the Administrative Office regarding your Post-Activity Report(s) (PA Report) for completed activities that are currently pending submission ({pending_count} pending report(s)):
+
+{activity_list}
 
 Prompt submission of PA reports is required for official documentation, certificate issuance, and institutional compliance.
 
@@ -67,6 +79,28 @@ Thank you for your cooperation!
 Best regards,
 Administrative Office / TAAS 2025`;
 
+export const DEFAULT_BULK_EMAIL_SUBJECT =
+  "Notice: Pending Post-Activity Reports (PA Reports) Submission";
+
+export const DEFAULT_BULK_EMAIL_BODY = `Dear Faculty Members,
+
+This is a general reminder from the Administrative Office regarding pending Post-Activity Reports (PA Reports) for completed activities under TAAS 2025.
+
+If you have unsubmitted PA report(s), kindly ensure prompt submission for official documentation, certificate processing, and institutional compliance.
+
+Please log in to the submission portal to view and submit any outstanding reports at your earliest convenience.
+
+If you have already submitted your report(s) recently, please disregard this notice.
+
+Thank you for your continued dedication and support!
+
+Best regards,
+Administrative Office / TAAS 2025`;
+
+// Kept for backward compatibility
+export const DEFAULT_EMAIL_SUBJECT = DEFAULT_BULK_EMAIL_SUBJECT;
+export const DEFAULT_EMAIL_BODY = DEFAULT_BULK_EMAIL_BODY;
+
 export function BulkEmailModal({
   open,
   onOpenChange,
@@ -78,26 +112,53 @@ export function BulkEmailModal({
   const [activeTab, setActiveTab] = useState<"recipients" | "template" | "preview">("recipients");
   const [search, setSearch] = useState("");
   const [selectedNames, setSelectedNames] = useState<Set<string>>(new Set());
-  const [subject, setSubject] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("bulk_email_subject");
-      if (saved) return saved;
+  const [recipientMode, setRecipientMode] = useState<"to" | "bcc">("to");
+
+  const isSingleMode = selectedNames.size === 1;
+
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+
+  // Sync template based on single vs bulk mode when modal opens or mode changes
+  useEffect(() => {
+    if (!open) return;
+    if (isSingleMode) {
+      const savedSubj = localStorage.getItem("single_email_subject");
+      const savedBody = localStorage.getItem("single_email_body");
+      setSubject(savedSubj || DEFAULT_SINGLE_EMAIL_SUBJECT);
+      setBody(savedBody || DEFAULT_SINGLE_EMAIL_BODY);
+    } else {
+      const savedSubj = localStorage.getItem("bulk_email_subject");
+      const savedBody = localStorage.getItem("bulk_email_body");
+      setSubject(savedSubj || DEFAULT_BULK_EMAIL_SUBJECT);
+      setBody(savedBody || DEFAULT_BULK_EMAIL_BODY);
     }
-    return DEFAULT_EMAIL_SUBJECT;
-  });
-  const [body, setBody] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("bulk_email_body");
-      if (saved) return saved;
-    }
-    return DEFAULT_EMAIL_BODY;
-  });
+  }, [open, isSingleMode]);
+
   const [copied, setCopied] = useState(false);
 
   const handleSaveTemplate = () => {
-    localStorage.setItem("bulk_email_subject", subject);
-    localStorage.setItem("bulk_email_body", body);
-    toast.success("Default email template saved successfully!");
+    if (isSingleMode) {
+      localStorage.setItem("single_email_subject", subject);
+      localStorage.setItem("single_email_body", body);
+      toast.success("Individual email template saved successfully!");
+    } else {
+      localStorage.setItem("bulk_email_subject", subject);
+      localStorage.setItem("bulk_email_body", body);
+      toast.success("Bulk email template saved successfully!");
+    }
+  };
+
+  const handleResetTemplate = () => {
+    if (isSingleMode) {
+      setSubject(DEFAULT_SINGLE_EMAIL_SUBJECT);
+      setBody(DEFAULT_SINGLE_EMAIL_BODY);
+      toast.info("Reset to default individual email template.");
+    } else {
+      setSubject(DEFAULT_BULK_EMAIL_SUBJECT);
+      setBody(DEFAULT_BULK_EMAIL_BODY);
+      toast.info("Reset to default bulk email template.");
+    }
   };
   const [previewFacultyName, setPreviewFacultyName] = useState<string>("");
 
@@ -106,9 +167,16 @@ export function BulkEmailModal({
     if (open) {
       if (preselectedNames && preselectedNames.length > 0) {
         setSelectedNames(new Set(preselectedNames));
+        if (preselectedNames.length === 1) {
+          setPreviewFacultyName(preselectedNames[0]);
+          setActiveTab("preview");
+        } else {
+          setActiveTab("recipients");
+        }
       } else {
         // By default select all faculty with pending reports
         setSelectedNames(new Set(facultyList.map((f) => f.faculty_name)));
+        setActiveTab("recipients");
       }
       if (facultyList.length > 0 && !previewFacultyName) {
         setPreviewFacultyName(facultyList[0].faculty_name);
@@ -179,11 +247,29 @@ export function BulkEmailModal({
     );
   }, [facultyList, previewFacultyName, selectedFacultyObjects]);
 
+  const renderedPreviewSubject = useMemo(() => {
+    if (!previewItem) return subject;
+    return subject.replace(/{faculty_name}/g, previewItem.faculty_name);
+  }, [subject, previewItem]);
+
   const renderedPreviewBody = useMemo(() => {
     if (!previewItem) return body;
+
+    const actListStr =
+      previewItem.activities && previewItem.activities.length > 0
+        ? previewItem.activities
+            .slice(0, 10)
+            .map(
+              (act) =>
+                `• ${act.task_rendered ?? "Activity"} — ${act.institution ?? "—"} (${fmtDate(act.date_activity ?? act.date_received)})`
+            )
+            .join("\n")
+        : "";
+
     return body
       .replace(/{faculty_name}/g, previewItem.faculty_name)
-      .replace(/{pending_count}/g, String(previewItem.count));
+      .replace(/{pending_count}/g, String(previewItem.count))
+      .replace(/{activity_list}/g, actListStr);
   }, [body, previewItem]);
 
   // Mutation to log reminders to Supabase database
@@ -200,7 +286,7 @@ export function BulkEmailModal({
         activity_id: f.oldestActivityId || null,
         faculty_name: f.faculty_name,
         email: f.email || null,
-        message: `[Bulk Email] ${subject} (${f.count} pending PARs)`,
+        message: `[Email Reminder] ${subject} (${f.count} pending PARs)`,
         channel: "email",
         status: f.email ? "sent" : "failed",
         sent_by: currentUserId || null,
@@ -214,32 +300,59 @@ export function BulkEmailModal({
       qc.invalidateQueries({ queryKey: ["reminder-logs"] });
       if (method === "mailto") {
         toast.success(
-          `Opened mail client and recorded ${selectedFacultyObjects.length} bulk reminder logs!`,
+          `Opened mail client and recorded ${selectedFacultyObjects.length} reminder log(s)!`,
         );
       } else {
-        toast.success(`Logged ${selectedFacultyObjects.length} bulk reminder entries!`);
+        toast.success(`Logged ${selectedFacultyObjects.length} reminder entries!`);
       }
       onSuccess?.();
       onOpenChange(false);
     },
     onError: (e) => {
-      toast.error(e instanceof Error ? e.message : "Failed to record bulk reminder logs");
+      toast.error(e instanceof Error ? e.message : "Failed to record reminder logs");
     },
   });
 
-  // Action 1: Open default mail app with BCC
+  // Action 1: Open default mail app with TO or BCC
   const handleOpenMailClient = () => {
     if (validEmailRecipients.length === 0) {
       toast.error("No valid email addresses found among selected faculty members.");
       return;
     }
 
-    const bccEmails = validEmailRecipients.map((f) => f.email!.trim()).join(",");
-    const genericBody = body
-      .replace(/{faculty_name}/g, "Faculty Member")
-      .replace(/{pending_count}/g, "pending");
+    const recipientEmails = validEmailRecipients.map((f) => f.email!.trim()).join(",");
+    let finalSubject = subject;
+    let finalBody = body;
 
-    const mailtoUrl = `mailto:?bcc=${encodeURIComponent(bccEmails)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(genericBody)}`;
+    if (validEmailRecipients.length === 1) {
+      const single = validEmailRecipients[0];
+      const actListStr =
+        single.activities && single.activities.length > 0
+          ? single.activities
+              .slice(0, 10)
+              .map(
+                (act) =>
+                  `• ${act.task_rendered ?? "Activity"} — ${act.institution ?? "—"} (${fmtDate(act.date_activity ?? act.date_received)})`
+              )
+              .join("\n")
+          : "";
+      finalSubject = finalSubject.replace(/{faculty_name}/g, single.faculty_name);
+      finalBody = finalBody
+        .replace(/{faculty_name}/g, single.faculty_name)
+        .replace(/{pending_count}/g, String(single.count))
+        .replace(/{activity_list}/g, actListStr);
+    } else {
+      finalSubject = finalSubject.replace(/{faculty_name}/g, "Faculty Members");
+      finalBody = finalBody
+        .replace(/{faculty_name}/g, "Faculty Member")
+        .replace(/{pending_count}/g, "pending")
+        .replace(/{activity_list}/g, "• Pending Post-Activity Report(s)");
+    }
+
+    const mailtoUrl =
+      recipientMode === "to"
+        ? `mailto:${encodeURIComponent(recipientEmails)}?subject=${encodeURIComponent(finalSubject)}&body=${encodeURIComponent(finalBody)}`
+        : `mailto:?bcc=${encodeURIComponent(recipientEmails)}&subject=${encodeURIComponent(finalSubject)}&body=${encodeURIComponent(finalBody)}`;
 
     // Open mailto link
     window.location.href = mailtoUrl;
@@ -266,6 +379,8 @@ export function BulkEmailModal({
     logBulkReminders.mutate({ method: "log_only" });
   };
 
+  const singleFacultyName = isSingleMode ? selectedFacultyObjects[0]?.faculty_name : null;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden sm:rounded-xl">
@@ -273,7 +388,7 @@ export function BulkEmailModal({
           <div className="flex items-center gap-2 text-primary">
             <Mail className="h-5 w-5" />
             <DialogTitle className="font-display text-xl font-semibold">
-              Bulk Email Reminders
+              {singleFacultyName ? `Email Reminder — ${singleFacultyName}` : "Bulk Email Reminders"}
             </DialogTitle>
           </div>
           <DialogDescription className="text-xs text-muted-foreground mt-1">
@@ -441,7 +556,15 @@ export function BulkEmailModal({
           {activeTab === "template" && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-foreground">Email Subject</label>
+                <div className="flex items-center gap-2">
+                  <label className="text-xs font-semibold text-foreground">Email Subject</label>
+                  <Badge
+                    variant={isSingleMode ? "default" : "secondary"}
+                    className="text-[10px] px-2 py-0.5"
+                  >
+                    {isSingleMode ? "Individual Email Template" : "Bulk Email Template"}
+                  </Badge>
+                </div>
                 <div className="flex items-center gap-1.5">
                   <Button
                     type="button"
@@ -456,11 +579,7 @@ export function BulkEmailModal({
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => {
-                      setSubject(DEFAULT_EMAIL_SUBJECT);
-                      setBody(DEFAULT_EMAIL_BODY);
-                      toast.info("Reset to default system template. Click 'Save Template' if you want to make this permanent.");
-                    }}
+                    onClick={handleResetTemplate}
                     className="text-xs h-7 gap-1 text-muted-foreground hover:text-foreground"
                   >
                     <RotateCcw className="h-3 w-3" /> Reset to Default
@@ -481,7 +600,8 @@ export function BulkEmailModal({
                   <span className="text-[11px] text-muted-foreground">
                     Available variables:{" "}
                     <code className="bg-muted px-1 rounded">{`{faculty_name}`}</code>,{" "}
-                    <code className="bg-muted px-1 rounded">{`{pending_count}`}</code>
+                    <code className="bg-muted px-1 rounded">{`{pending_count}`}</code>,{" "}
+                    <code className="bg-muted px-1 rounded">{`{activity_list}`}</code>
                   </span>
                 </div>
                 <Textarea
@@ -499,10 +619,9 @@ export function BulkEmailModal({
                   <span className="font-semibold text-foreground">Dynamic Placeholders:</span>
                   <p className="mt-0.5">
                     When sending or previewing emails,{" "}
-                    <code className="text-primary">{`{faculty_name}`}</code> will automatically be
-                    replaced with the professor's full name, and{" "}
-                    <code className="text-primary">{`{pending_count}`}</code> with their total
-                    unsubmitted PAR count.
+                    <code className="text-primary">{`{faculty_name}`}</code> is replaced with the professor's full name,{" "}
+                    <code className="text-primary">{`{pending_count}`}</code> with their PAR count, and{" "}
+                    <code className="text-primary">{`{activity_list}`}</code> with bulleted activity details.
                   </p>
                 </div>
               </div>
@@ -512,8 +631,35 @@ export function BulkEmailModal({
           {/* TAB 3: PREVIEW & SEND */}
           {activeTab === "preview" && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-foreground">Live Message Preview:</span>
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-foreground">Recipient Field:</span>
+                  <div className="inline-flex rounded-lg border border-border bg-muted/50 p-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setRecipientMode("to")}
+                      className={`px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors ${
+                        recipientMode === "to"
+                          ? "bg-background text-foreground shadow-sm font-semibold"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      To: (Visible)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRecipientMode("bcc")}
+                      className={`px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors ${
+                        recipientMode === "bcc"
+                          ? "bg-background text-foreground shadow-sm font-semibold"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      Bcc: (Hidden)
+                    </button>
+                  </div>
+                </div>
+
                 {facultyList.length > 1 && (
                   <div className="flex items-center gap-2">
                     <span className="text-muted-foreground">Preview for:</span>
@@ -536,15 +682,20 @@ export function BulkEmailModal({
               <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
                 <div className="border-b border-border bg-muted/40 p-3 text-xs space-y-1">
                   <div className="flex gap-2">
-                    <span className="text-muted-foreground w-14 font-medium">To:</span>
-                    <span className="font-medium text-foreground">
-                      {previewItem?.faculty_name || "Faculty Member"} &lt;
-                      {previewItem?.email || "no-email-on-file@domain.edu"}&gt;
+                    <span className="text-muted-foreground w-14 font-medium">
+                      {recipientMode === "to" ? "To:" : "Bcc:"}
+                    </span>
+                    <span className="font-medium text-foreground truncate">
+                      {recipientMode === "to"
+                        ? validEmailRecipients.map((f) => f.email).join(", ") || "No valid emails selected"
+                        : previewItem?.faculty_name
+                          ? `${previewItem.faculty_name} <${previewItem.email || "no-email"}> (+ ${validEmailRecipients.length - 1} hidden in BCC)`
+                          : "Faculty Members"}
                     </span>
                   </div>
                   <div className="flex gap-2">
                     <span className="text-muted-foreground w-14 font-medium">Subject:</span>
-                    <span className="font-semibold text-foreground">{subject}</span>
+                    <span className="font-semibold text-foreground">{renderedPreviewSubject}</span>
                   </div>
                 </div>
                 <div className="p-4 text-xs font-mono leading-relaxed whitespace-pre-wrap text-foreground bg-background/50 max-h-[220px] overflow-y-auto">
@@ -556,7 +707,9 @@ export function BulkEmailModal({
               <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2 text-xs">
                 <div className="flex items-center justify-between font-medium text-foreground">
                   <span>Selected Recipients Summary:</span>
-                  <span>{validEmailRecipients.length} valid email recipients</span>
+                  <span>
+                    {validEmailRecipients.length} valid email recipients ({recipientMode.toUpperCase()})
+                  </span>
                 </div>
 
                 {missingEmailCount > 0 && (
@@ -587,7 +740,7 @@ export function BulkEmailModal({
               ) : (
                 <Copy className="h-3.5 w-3.5" />
               )}
-              {copied ? "Copied Emails!" : "Copy Emails (BCC)"}
+              {copied ? "Copied Emails!" : `Copy Emails (${recipientMode.toUpperCase()})`}
             </Button>
 
             <Button
