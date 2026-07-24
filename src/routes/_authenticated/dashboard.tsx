@@ -185,7 +185,7 @@ function Dashboard() {
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-xl border border-border bg-card p-5">
           <div className="flex items-center justify-between">
-            <h3 className="font-display font-semibold">Top campuses / units by pending PARs</h3>
+            <h3 className="font-display font-semibold">Post-Activity Report Summary</h3>
             <button
               type="button"
               onClick={() => setBreakdownModalOpen(true)}

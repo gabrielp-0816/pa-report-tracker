@@ -102,7 +102,7 @@ export function CampusBreakdownModal({
           <div className="flex items-center gap-2 text-primary">
             <Building2 className="h-5 w-5" />
             <DialogTitle className="font-display text-xl font-semibold">
-              Campuses & Units Breakdown
+              Post-Activity Report Summary
             </DialogTitle>
           </div>
           <DialogDescription className="text-xs text-muted-foreground mt-1">
