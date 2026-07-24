@@ -1,3 +1,4 @@
+import { useState, useMemo } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +17,8 @@ import {
   Legend,
 } from "recharts";
 import { fmtDate } from "@/lib/format";
+import { normalizeCampusName } from "@/lib/campus-utils";
+import { CampusBreakdownModal, CampusSummaryItem } from "@/components/campus-breakdown-modal";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — TAAS 2025" }] }),
@@ -33,6 +36,8 @@ type Activity = {
 };
 
 function Dashboard() {
+  const [breakdownModalOpen, setBreakdownModalOpen] = useState(false);
+
   const { data, isLoading } = useQuery({
     queryKey: ["activities-all"],
     queryFn: async () => {
@@ -40,7 +45,7 @@ function Dashboard() {
         .from("activities")
         .select("id,faculty_name,institution,date_received,par_received_at,position,task_rendered")
         .order("date_received", { ascending: false })
-        .limit(2000);
+        .limit(10000);
       if (error) throw error;
       return data as Activity[];
     },
@@ -65,18 +70,34 @@ function Dashboard() {
   }
   const monthly = Array.from(byMonth.values()).sort((a, b) => a.month.localeCompare(b.month));
 
-  // Top campuses by pending
-  const byCampus = new Map<string, { name: string; pending: number; submitted: number }>();
-  for (const r of rows) {
-    const c = (r.position || "Unassigned").replace(/^Faculty\s*-\s*/i, "");
-    if (!byCampus.has(c)) byCampus.set(c, { name: c, pending: 0, submitted: 0 });
-    const b = byCampus.get(c)!;
-    if (r.par_received_at) b.submitted++;
-    else b.pending++;
-  }
-  const topCampuses = Array.from(byCampus.values())
-    .sort((a, b) => b.pending - a.pending)
-    .slice(0, 6);
+  // Top campuses by pending (normalized & merged to prevent duplication)
+  const allCampusesSorted: CampusSummaryItem[] = useMemo(() => {
+    const byCampus = new Map<
+      string,
+      { name: string; pending: number; submitted: number; total: number; rate: number }
+    >();
+
+    for (const r of rows) {
+      const rawCampus = r.position || r.institution || "Unassigned";
+      const c = normalizeCampusName(rawCampus);
+      if (!byCampus.has(c)) {
+        byCampus.set(c, { name: c, pending: 0, submitted: 0, total: 0, rate: 0 });
+      }
+      const b = byCampus.get(c)!;
+      b.total++;
+      if (r.par_received_at) b.submitted++;
+      else b.pending++;
+    }
+
+    return Array.from(byCampus.values())
+      .map((c) => ({
+        ...c,
+        rate: c.total > 0 ? Math.round((c.submitted / c.total) * 100) : 0,
+      }))
+      .sort((a, b) => b.pending - a.pending);
+  }, [rows]);
+
+  const topCampuses = useMemo(() => allCampusesSorted.slice(0, 6), [allCampusesSorted]);
 
   const statusPie = [
     { name: "Submitted", value: submitted, fill: "var(--color-success)" },
@@ -165,19 +186,20 @@ function Dashboard() {
         <div className="rounded-xl border border-border bg-card p-5">
           <div className="flex items-center justify-between">
             <h3 className="font-display font-semibold">Top campuses / units by pending PARs</h3>
-            <Link
-              to="/activities"
-              className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+            <button
+              type="button"
+              onClick={() => setBreakdownModalOpen(true)}
+              className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline cursor-pointer"
             >
               View all <ArrowRight className="h-3 w-3" />
-            </Link>
+            </button>
           </div>
           <div className="mt-4 h-72">
             <ResponsiveContainer>
               <BarChart data={topCampuses} layout="vertical" margin={{ left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
                 <XAxis type="number" tick={{ fontSize: 11 }} />
-                <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} width={140} />
+                <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} width={160} />
                 <Tooltip />
                 <Bar
                   dataKey="pending"
@@ -237,6 +259,12 @@ function Dashboard() {
           </div>
         </div>
       </div>
+
+      <CampusBreakdownModal
+        open={breakdownModalOpen}
+        onOpenChange={setBreakdownModalOpen}
+        campusData={allCampusesSorted}
+      />
     </div>
   );
 }
