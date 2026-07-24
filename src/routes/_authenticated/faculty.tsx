@@ -194,6 +194,21 @@ function FacultyPage() {
               {paginated.map((c) => {
                 const r = rollup?.get(c.faculty_name);
                 const isEditing = editing === c.faculty_name;
+
+                const handleKeyDown = (e: React.KeyboardEvent) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    save.mutate({
+                      name: c.faculty_name,
+                      department: form.department,
+                      email: form.email,
+                      phone: form.phone,
+                    });
+                  } else if (e.key === "Escape") {
+                    setEditing(null);
+                  }
+                };
+
                 return (
                   <tr
                     key={c.faculty_name}
@@ -205,6 +220,7 @@ function FacultyPage() {
                         <input
                           value={form.department}
                           onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
+                          onKeyDown={handleKeyDown}
                           className="w-full rounded border border-input bg-background px-2 py-1 text-xs"
                           placeholder="Department or Campus"
                         />
@@ -220,6 +236,7 @@ function FacultyPage() {
                           type="email"
                           value={form.email}
                           onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                          onKeyDown={handleKeyDown}
                           className="w-full rounded border border-input bg-background px-2 py-1 text-xs"
                           placeholder="name@school.edu"
                         />
@@ -234,6 +251,7 @@ function FacultyPage() {
                         <input
                           value={form.phone}
                           onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                          onKeyDown={handleKeyDown}
                           className="w-full rounded border border-input bg-background px-2 py-1 text-xs"
                         />
                       ) : (
